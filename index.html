@@ -70,7 +70,7 @@
             <div class="menu-item" onclick="app.nav('profile')">👤 My Profile</div>
             <div class="menu-item" onclick="app.nav('curr-admins')">👥 Current Admin</div>
             <div class="menu-item section-view hidden" onclick="app.nav('weekly')">📝 Weekly Reports</div>
-            <div class="menu-item section-view hidden" onclick="app.nav('promo')">🎖️ Promotion List</div>
+            <div class="menu-item section-view hidden" onclick="app.nav('promo')">🎖️ Leader Board </div>
             <div class="menu-item section-view hidden" onclick="app.nav('stored')">📁 Store Files</div>
             <div class="menu-item section-hr hidden" onclick="app.nav('access')">🔐 Manage Requests</div>
             <div class="menu-item section-editor hidden" onclick="app.nav('bank')">🏦 Bank Control</div>
@@ -190,8 +190,8 @@
                         break;
 
                     case 'promo':
-                        html = `<h3>Promotion List</h3>
-                            <button style="background:var(--gold)" onclick="app.calcPromo()">🔄 Calculate Last Store</button>
+                        html = `<h3>Leader Bord</h3>
+                            <button style="background:var(--gold)" onclick="app.calcPromo()">🔄 Calculate High score</button>
                             <div id="promo-res" style="margin-top:15px"></div>`;
                         break;
 
@@ -255,7 +255,7 @@
                     const a = adminsList.find(x => x.name === name);
                     if(!a) continue;
                     if(!stats[name].hasWarning && stats[name].pts >= 12) {
-                        resHtml += `<div class="card" style="border-left:5px solid var(--success)">🏆 <b>${name}</b> Eligible (${a.lvl} → Next) | Points: ${stats[name].pts}</div>`;
+                        resHtml += `<div class="card" style="border-left:5px solid var(--success)">🏆 <b>${name}</b> High Score | Points: ${stats[name].pts}</div>`;
                     } else if(stats[name].hasWarning) {
                         resHtml += `<div class="card" style="border-left:5px solid var(--danger)">❌ <b>${name}</b> Cancelled (Reason: ${stats[name].w})</div>`;
                     }

@@ -35,6 +35,7 @@
         .btn-del { background: var(--danger); width: auto; float: right; padding: 4px 8px; font-size: 10px; margin-top: -30px; }
         .rule-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; white-space: pre-wrap; margin-top: 10px; }
         .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .tag-span { color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}
     </style>
 </head>
 <body>
@@ -72,7 +73,7 @@
             <div class="menu-item" onclick="app.nav('promo')">🎖️ Leader Board </div>
             <div class="menu-item section-view hidden" onclick="app.nav('stored')">📁 Store Files</div>
             <div class="menu-item section-hr hidden" onclick="app.nav('access')">🔐 Manage Requests</div>
-            <div class="menu-item section-editor hidden" onclick="app.nav('bank')">🏦 Bank Control</div>
+            
             <div class="menu-item" onclick="app.logout()" style="color:var(--danger)">Logout</div>
         </div>
 
@@ -94,7 +95,7 @@
         const db = firebase.database();
 
         const app = {
-            data: { ownerKey: '27052011', admins: [], requests: [], history: [], lbStatus: 'closed', lbFileIndex: -1, activeWeek: null, appRules: "", ruleAuthor: "", ruleDate: "" },
+            data: { ownerKey: '27052011', admins: [], requests: [], history: [], lbStatus: 'closed', lbFileIndex: -1, activeWeek: null, appRules: "", ruleAuthor: "", ruleDate: "", ownerInfo: {tag: 'OWNER', tagColor: '#d4af37', boxColor: '#fff8dc'} },
             user: null,
 
             init() {
@@ -131,9 +132,9 @@
                     if(el.classList.contains('section-view') || el.classList.contains('section-hr') || el.classList.contains('section-editor')) el.classList.add('hidden');
                 });
 
-                if(['owner', 'editor', 'view', 'hr'].includes(role)) document.querySelectorAll('.section-view').forEach(el => el.classList.remove('hidden'));
-                if(['owner', 'hr', 'editor'].includes(role)) document.querySelectorAll('.section-hr').forEach(el => el.classList.remove('hidden'));
-                if(['owner', 'editor'].includes(role)) document.querySelectorAll('.section-editor').forEach(el => el.classList.remove('hidden'));
+                if(['owner', 'editor', 'view', 'hr', 'high_command'].includes(role)) document.querySelectorAll('.section-view').forEach(el => el.classList.remove('hidden'));
+                if(['owner', 'hr', 'editor', 'high_command'].includes(role)) document.querySelectorAll('.section-hr').forEach(el => el.classList.remove('hidden'));
+                if(['owner', 'editor', 'high_command'].includes(role)) document.querySelectorAll('.section-editor').forEach(el => el.classList.remove('hidden'));
             },
 
             nav(page) {
@@ -146,6 +147,15 @@
                     case 'profile':
                         const me = (this.user.role === 'owner') ? this.user : (adminsList.find(x => x.name === this.user.name) || this.user);
                         html = `<div class="card" style="text-align:center"><h3>${me.name}</h3><p>${me.lvl}</p><div style="color:red">Warn: ${me.warnings || 'None'}</div><hr><small>Bank</small><br><b>${me.bank || 0}</b></div>`;
+                        
+                        // Change 1: Master Key Change Option for Owner
+                        if(this.user.role === 'owner') {
+                            html += `<div class="card" style="margin-top:15px; border-top: 2px solid var(--danger);">
+                                <h4>Change Master Key</h4>
+                                <input type="text" id="new-master" value="${this.data.ownerKey}">
+                                <button style="background:var(--danger)" onclick="app.updateMasterKey()">Update Master Key</button>
+                            </div>`;
+                        }
                         break;
 
                     case 'rules':
@@ -173,29 +183,68 @@
 
                     case 'curr-admins':
                         html = `<h3>Current Admin</h3>`;
-                        adminsList.forEach((a, i) => {
-                            const isOwner = this.user.role === 'owner';
-                            const isEditor = this.user.role === 'editor';
-                            html += `<div class="card">
-                                <b>${a.name}</b> - <small>${a.lvl}</small>
-                                ${(isOwner || isEditor) ? `<button class="role-btn" style="float:right; background:var(--primary); color:white" onclick="app.viewAdminProfile(${i})">👁️ Profile</button>` : ''}
-                                <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">
-                                    ${isOwner ? `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>` : ''}
-                                    ${(isOwner || (isEditor && a.name !== this.user.name)) ? `
-                                        <button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>
-                                        <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>
-                                        <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>
-                                    ` : ''}
-                                    ${(isOwner || (isEditor && a.name !== this.user.name)) ? `<button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>` : ''}
-                                    ${isOwner ? `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>` : ''}
-                                </div>
+                        const isOwner = this.user.role === 'owner';
+                        const isEditor = this.user.role === 'editor';
+                        const isHC = this.user.role === 'high_command';
+
+                        // Change 2: Owner's customized profile at the top
+                        let oInfo = this.data.ownerInfo || {tag: 'OWNER', tagColor: '#d4af37', boxColor: '#fff8dc'};
+                        html += `<div class="card" style="background:${oInfo.boxColor}; border: 1px solid ${oInfo.tagColor};">
+                            <b>Shafin_Mirza</b> <span class="tag-span" style="background:${oInfo.tagColor}">${oInfo.tag}</span>
+                            <br><small>Project Owner</small>`;
+                        if(isOwner) {
+                            html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">
+                                <small>Tag Name:</small> <input id="ow-t" value="${oInfo.tag}" style="width:30%; padding:5px; margin-right:2px">
+                                <small>Tag Color:</small> <input type="color" id="ow-tc" value="${oInfo.tagColor}" style="width:15%; padding:0; margin-right:2px">
+                                <small>Box Color:</small> <input type="color" id="ow-bc" value="${oInfo.boxColor}" style="width:15%; padding:0">
+                                <button class="role-btn" onclick="app.setOwnerStyle()" style="background:var(--primary); color:white">Set Style</button>
                             </div>`;
+                        }
+                        html += `</div>`;
+
+                        adminsList.forEach((a, i) => {
+                            let aTag = a.tag ? `<span class="tag-span" style="background:${a.tagColor||'#555'}">${a.tag}</span>` : '';
+                            html += `<div class="card" style="background:${a.boxColor || 'var(--card)'}">
+                                <b>${a.name}</b> ${aTag} - <small>${a.lvl}</small>`;
+                            
+                            let canView = isOwner || isEditor || (isHC && a.role !== 'high_command');
+                            if(canView) {
+                                html += `<button class="role-btn" style="float:right; background:var(--primary); color:white" onclick="app.viewAdminProfile(${i})">👁️ Profile</button>`;
+                            }
+
+                            html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">`;
+                                
+                            if(isOwner) {
+                                html += `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>
+                                <div style="margin-top:5px; margin-bottom:5px">
+                                    <input id="tg-${i}" placeholder="Tag" value="${a.tag||''}" style="width:30%; padding:5px; margin-right:2px">
+                                    <input type="color" id="tc-${i}" value="${a.tagColor||'#555555'}" style="width:15%; padding:0; margin-right:2px">
+                                    <input type="color" id="bc-${i}" value="${a.boxColor||'#f6f7f9'}" style="width:15%; padding:0">
+                                    <button class="role-btn" onclick="app.setAdminStyle(${i})" style="background:var(--primary); color:white">Set Style</button>
+                                </div>`;
+                            }
+                            
+                            let canEditRoles = isOwner || (isEditor && a.name !== this.user.name) || (isHC && a.name !== this.user.name && a.role !== 'high_command');
+                            
+                            if(canEditRoles) {
+                                html += `<button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>
+                                         <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>
+                                         <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>
+                                         <button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>`;
+                            }
+                            
+                            if(isOwner) {
+                                html += `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>
+                                         <button class="role-btn ${a.role==='high_command'?'active-role':''}" style="background:var(--gold); color:black" onclick="app.setRole(${i},'high_command')">High Command</button>`;
+                            }
+                            
+                            html += `</div></div>`;
                         });
                         break;
 
                     case 'weekly':
                         html = `<h3>Weekly Reports</h3>`;
-                        if(['owner', 'editor'].includes(this.user.role)) {
+                        if(['owner', 'editor', 'high_command'].includes(this.user.role)) {
                             if(!this.data.activeWeek) {
                                 html += `<div class="card"><input id="wt" placeholder="Week Title"><button onclick="app.startW()">Start New Week</button></div>`;
                             } else {
@@ -216,15 +265,17 @@
 
                     case 'promo':
                         html = `<h3>Leader Board</h3>`;
-                        if(['owner', 'editor'].includes(this.user.role)) {
+                        // Change 3: Leaderboard publish options
+                        if(['owner', 'high_command'].includes(this.user.role)) {
                             const history = this.data.history || [];
                             html += `<div class="card">
                                 <label>Select File:</label>
-                                <select id="lb-file-select">
+                                <select id="lb-file-select" style="margin-bottom:10px;">
                                     ${history.map((h, idx) => `<option value="${idx}">${h.title}</option>`).join('')}
                                 </select>
-                                <button style="background:var(--gold)" onclick="app.publishLB()">🔄 Publish Result</button>
-                                <button style="background:var(--danger); margin-top:5px;" onclick="app.closeLB()">🔒 Close Board</button>
+                                <button style="background:var(--primary); margin-bottom:5px;" onclick="app.setLBStatus('published_hc')">👁️ Result for High Command</button>
+                                <button style="background:var(--success); margin-bottom:5px;" onclick="app.setLBStatus('published_public')">🌍 Result Public</button>
+                                <button style="background:var(--danger)" onclick="app.setLBStatus('closed')">🔒 Close the Leader Board</button>
                             </div>`;
                         }
                         html += `<div id="promo-res"></div>`;
@@ -253,6 +304,31 @@
                 if(page === 'weekly') this.renderLive();
             },
 
+            updateMasterKey() {
+                const nk = document.getElementById('new-master').value;
+                if(nk.trim() === '') return alert("Key cannot be empty!");
+                if(confirm("Are you sure you want to change the Master Key?")) {
+                    this.data.ownerKey = nk;
+                    this.save();
+                    alert("Master Key Updated Successfully!");
+                }
+            },
+
+            setOwnerStyle() {
+                if(!this.data.ownerInfo) this.data.ownerInfo = {};
+                this.data.ownerInfo.tag = document.getElementById('ow-t').value;
+                this.data.ownerInfo.tagColor = document.getElementById('ow-tc').value;
+                this.data.ownerInfo.boxColor = document.getElementById('ow-bc').value;
+                this.save(); this.nav('curr-admins');
+            },
+
+            setAdminStyle(i) {
+                this.data.admins[i].tag = document.getElementById(`tg-${i}`).value;
+                this.data.admins[i].tagColor = document.getElementById(`tc-${i}`).value;
+                this.data.admins[i].boxColor = document.getElementById(`bc-${i}`).value;
+                this.save(); this.nav('curr-admins');
+            },
+
             updateRules() {
                 const text = document.getElementById('rule-input').value;
                 const now = new Date();
@@ -266,7 +342,7 @@
 
             manualBank() {
                 const name = document.getElementById('b-u').value;
-                if(this.user.role === 'editor' && name === this.user.name) {
+                if((this.user.role === 'editor' || this.user.role === 'high_command') && name === this.user.name) {
                     return alert("Restriction: You cannot edit your own points/warnings!");
                 }
                 const pts = parseInt(document.getElementById('b-p').value) || 0;
@@ -287,7 +363,7 @@
                 const n = document.getElementById('sel-n').value;
                 const d = document.getElementById('fd').value;
                 if(!d) return alert("Please select a date!");
-                if(this.user.role === 'editor' && n === this.user.name) {
+                if((this.user.role === 'editor' || this.user.role === 'high_command') && n === this.user.name) {
                     return alert("Restriction: You cannot add points to your own account via Weekly Reports!");
                 }
                 const h = parseFloat(document.getElementById('fh').value)||0;
@@ -326,6 +402,9 @@
 
             viewAdminProfile(i) {
                 const a = this.data.admins[i];
+                if(this.user.role === 'high_command' && a.role === 'high_command') {
+                    return alert("Restriction: High Command cannot view another High Command's profile.");
+                }
                 const isOwner = this.user.role === 'owner';
                 document.getElementById('screen').innerHTML = `<h3>Admin Profile</h3>
                 <div class="card">
@@ -351,21 +430,32 @@
                 this.save(); alert("Updated Successfully!"); this.nav('curr-admins');
             },
 
-            publishLB() {
-                const idx = document.getElementById('lb-file-select').value;
-                if(idx === "") return;
-                this.data.lbStatus = 'published';
-                this.data.lbFileIndex = parseInt(idx);
+            setLBStatus(status) {
+                if(status === 'closed') {
+                    this.data.lbStatus = 'closed';
+                } else {
+                    const idx = document.getElementById('lb-file-select').value;
+                    if(idx === "") return;
+                    this.data.lbStatus = status;
+                    this.data.lbFileIndex = parseInt(idx);
+                }
                 this.save(); this.renderLB();
             },
-            closeLB() { this.data.lbStatus = 'closed'; this.save(); this.renderLB(); },
+
             renderLB() {
                 const div = document.getElementById('promo-res');
                 if(!div) return;
+                
                 if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) {
                     div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is currently closed.</p>";
                     return;
                 }
+
+                if(this.data.lbStatus === 'published_hc' && !['owner', 'high_command'].includes(this.user.role)) {
+                    div.innerHTML = "<p style='text-align:center; color:grey; font-weight:bold;'>Leader Board results are currently visible to High Command only.</p>";
+                    return;
+                }
+
                 const file = this.data.history[this.data.lbFileIndex];
                 if(!file) return;
                 const stats = {};
@@ -375,11 +465,14 @@
                     if(l.w && ["V1","V2","W1","W2","W3"].includes(l.w.toUpperCase())) stats[l.n].w = l.w.toUpperCase();
                 });
                 const sorted = Object.values(stats).sort((a,b)=>b.pts - a.pts);
-                div.innerHTML = `<h4>Ranking: ${file.title}</h4>` + sorted.map((s,i)=>`
+                
+                let boardType = this.data.lbStatus === 'published_hc' ? ' (High Command Only)' : ' (Public)';
+                div.innerHTML = `<h4>Ranking: ${file.title}${boardType}</h4>` + sorted.map((s,i)=>`
                     <div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}">
                         <b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w?`<br><small>Cancelled: ${s.w}</small>`:''}
                     </div>`).join('');
             },
+
             viewF(i) {
                 const f = this.data.history[i];
                 let h = `<h3>${f.title}</h3><button onclick="app.nav('stored')">Back</button><br><br>`;
@@ -398,7 +491,7 @@
             setRole(i, r) { this.data.admins[i].role = r; this.save(); this.nav('curr-admins'); },
             kick(i) { 
                 const target = this.data.admins[i];
-                if(this.user.role === 'editor' && target.name === this.user.name) return alert("You cannot kick yourself!");
+                if((this.user.role === 'editor' || this.user.role === 'high_command') && target.name === this.user.name) return alert("You cannot kick yourself!");
                 if(confirm(`Are you sure you want to kick ${target.name}?`)) { 
                     this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); 
                 }

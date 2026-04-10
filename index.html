@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tournament Admin Supreme | Ahypar New Edition</title>
+    <title>AHYPAR Administration </title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -23,7 +23,7 @@
         .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e3e5e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+        input, select, button, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         
         .menu-overlay { position: fixed; top: 0; right: 0; width: 85%; max-width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: -10px 0 20px rgba(0,0,0,0.1); transform: translateX(100%); transition: 0.3s; padding: 20px; }
@@ -33,10 +33,8 @@
         .role-btn { width: auto; padding: 5px 10px; font-size: 10px; background: #ddd; color: #555; margin-right: 2px; border:none; border-radius:4px; margin-top: 5px;}
         .active-role { background: var(--black) !important; color: white !important; }
         .btn-del { background: var(--danger); width: auto; float: right; padding: 4px 8px; font-size: 10px; margin-top: -30px; }
-        .btn-reject { background: var(--danger); width: 48%; display: inline-block; margin-left: 2%; }
-        .btn-approve { background: var(--success); width: 48%; display: inline-block; }
-        .warn-text { color: var(--danger); font-weight: bold; font-size: 11px; }
-        .pass-code { color: #5865f2; font-family: monospace; font-weight: bold; background: #eef; padding: 2px 5px; border-radius: 4px; }
+        .rule-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; white-space: pre-wrap; margin-top: 10px; }
+        .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -49,7 +47,7 @@
             <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:15px">
                 <p>New Staff? Apply</p>
                 <input id="req-n" placeholder="Name">
-                <input id="req-lvl" placeholder="Level (e.g. Lvl 1)">
+                <input id="req-lvl" placeholder="Level">
                 <button style="background:#4f545c" onclick="app.requestAccess()">Submit Application</button>
             </div>
         </div>
@@ -66,11 +64,12 @@
         </header>
 
         <div id="menu-overlay" class="menu-overlay">
-            <button onclick="app.toggleMenu(false)" class="danger" style="margin-bottom:15px">Close</button>
+            <button onclick="app.toggleMenu(false)" style="background:var(--danger); margin-bottom:15px; color:white;">Close</button>
             <div class="menu-item" onclick="app.nav('profile')">👤 My Profile</div>
+            <div class="menu-item" onclick="app.nav('rules')">📜 App Rules</div>
             <div class="menu-item" onclick="app.nav('curr-admins')">👥 Current Admin</div>
             <div class="menu-item section-view hidden" onclick="app.nav('weekly')">📝 Weekly Reports</div>
-            <div class="menu-item section-view hidden" onclick="app.nav('promo')">🎖️ Leader Board </div>
+            <div class="menu-item" onclick="app.nav('promo')">🎖️ Leader Board </div>
             <div class="menu-item section-view hidden" onclick="app.nav('stored')">📁 Store Files</div>
             <div class="menu-item section-hr hidden" onclick="app.nav('access')">🔐 Manage Requests</div>
             <div class="menu-item section-editor hidden" onclick="app.nav('bank')">🏦 Bank Control</div>
@@ -81,7 +80,6 @@
     </div>
 
     <script>
-        // --- UPDATED FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyCt-o3cjOqzdTZKudMGTsd54TRnjlTRe8Y",
             authDomain: "ahypar-admin-0904.firebaseapp.com",
@@ -96,7 +94,7 @@
         const db = firebase.database();
 
         const app = {
-            data: { ownerKey: '27052011', admins: [], requests: [], history: [] },
+            data: { ownerKey: '27052011', admins: [], requests: [], history: [], lbStatus: 'closed', lbFileIndex: -1, activeWeek: null, appRules: "", ruleAuthor: "", ruleDate: "" },
             user: null,
 
             init() {
@@ -112,7 +110,7 @@
             login() {
                 const val = document.getElementById('login-pass').value;
                 if (val === this.data.ownerKey) {
-                    this.user = { name: "Shafin_Mirza", role: 'owner', lvl: 'Owner' };
+                    this.user = { name: "Shafin_Mirza", role: 'owner', lvl: 'Owner', passcode: this.data.ownerKey };
                 } else {
                     const adminsList = this.data.admins || [];
                     const a = adminsList.find(x => x.passcode === val);
@@ -120,6 +118,7 @@
                     this.user = a;
                 }
                 this.showDash();
+                this.nav('profile');
             },
 
             showDash() {
@@ -135,8 +134,6 @@
                 if(['owner', 'editor', 'view', 'hr'].includes(role)) document.querySelectorAll('.section-view').forEach(el => el.classList.remove('hidden'));
                 if(['owner', 'hr', 'editor'].includes(role)) document.querySelectorAll('.section-hr').forEach(el => el.classList.remove('hidden'));
                 if(['owner', 'editor'].includes(role)) document.querySelectorAll('.section-editor').forEach(el => el.classList.remove('hidden'));
-
-                this.nav('profile');
             },
 
             nav(page) {
@@ -147,8 +144,31 @@
 
                 switch(page) {
                     case 'profile':
-                        const me = adminsList.find(x => x.name === this.user.name) || this.user;
-                        html = `<div class="card" style="text-align:center"><h3>${me.name}</h3><p>${me.lvl}</p><div class="warn-text">Warn: ${me.warnings || 'None'}</div><hr><small>Bank</small><br><b>${me.bank || 0}</b></div>`;
+                        const me = (this.user.role === 'owner') ? this.user : (adminsList.find(x => x.name === this.user.name) || this.user);
+                        html = `<div class="card" style="text-align:center"><h3>${me.name}</h3><p>${me.lvl}</p><div style="color:red">Warn: ${me.warnings || 'None'}</div><hr><small>Bank</small><br><b>${me.bank || 0}</b></div>`;
+                        break;
+
+                    case 'rules':
+                        html = `<h3>App Rules</h3>`;
+                        if(['owner', 'editor'].includes(this.user.role)) {
+                            html += `<textarea id="rule-input" rows="8" placeholder="Write rules here...">${this.data.appRules || ""}</textarea>
+                                     <button onclick="app.updateRules()">Update & Post Rules</button>`;
+                        }
+                        const meta = (this.data.ruleAuthor) ? `<div class="rule-meta">Posted by: ${this.data.ruleAuthor} | Date: ${this.data.ruleDate}</div>` : '';
+                        html += `<div class="rule-box">${meta}${this.data.appRules || "Rules will appear here."}</div>`;
+                        break;
+
+                    case 'bank':
+                        html = `<h3>Bank Control</h3>
+                            <div class="card">
+                                <label>Admin Name</label>
+                                <select id="b-u">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select>
+                                <label>Points (Use - to subtract)</label>
+                                <input type="number" id="b-p" placeholder="Points">
+                                <label>Update Warning</label>
+                                <input type="text" id="b-w" placeholder="Warning Status">
+                                <button style="background:var(--success)" onclick="app.manualBank()">Update Profile</button>
+                            </div>`;
                         break;
 
                     case 'curr-admins':
@@ -156,177 +176,254 @@
                         adminsList.forEach((a, i) => {
                             const isOwner = this.user.role === 'owner';
                             const isEditor = this.user.role === 'editor';
-                            html += `<div class="card"><b>${a.name}</b> - <small>${a.lvl}</small> [${a.role.toUpperCase()}]<br>
-                                <small>Warning: ${a.warnings || 'None'}</small>
-                                ${isOwner ? `<br><small>Code: <span class="pass-code">${a.passcode}</span></small>` : ''}
-                                <div style="margin-top:8px">
+                            html += `<div class="card">
+                                <b>${a.name}</b> - <small>${a.lvl}</small>
+                                ${(isOwner || isEditor) ? `<button class="role-btn" style="float:right; background:var(--primary); color:white" onclick="app.viewAdminProfile(${i})">👁️ Profile</button>` : ''}
+                                <div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">
                                     ${isOwner ? `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>` : ''}
                                     ${(isOwner || (isEditor && a.name !== this.user.name)) ? `
                                         <button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>
                                         <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>
                                         <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>
                                     ` : ''}
-                                    ${isOwner ? `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>
-                                    <button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>` : ''}
-                                </div></div>`;
+                                    ${(isOwner || (isEditor && a.name !== this.user.name)) ? `<button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>` : ''}
+                                    ${isOwner ? `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>` : ''}
+                                </div>
+                            </div>`;
                         });
                         break;
 
                     case 'weekly':
                         html = `<h3>Weekly Reports</h3>`;
                         if(['owner', 'editor'].includes(this.user.role)) {
-                            if(!this.data.activeWeek) html += `<input id="wt" placeholder="Week Title"><button onclick="app.startW()">Start Week</button>`;
-                            else {
+                            if(!this.data.activeWeek) {
+                                html += `<div class="card"><input id="wt" placeholder="Week Title"><button onclick="app.startW()">Start New Week</button></div>`;
+                            } else {
                                 html += `<div class="card">
+                                    <p>Working on: <b>${this.data.activeWeek.title}</b></p>
                                     <select id="sel-n">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select>
-                                    <input type="date" id="fd"><input type="number" step="0.1" id="fh" placeholder="Hours">
-                                    <input type="number" id="ft" placeholder="Tours"><input type="number" id="fi" placeholder="Interviews">
-                                    <input type="text" id="fw" placeholder="Warning (e.g. V1, None)">
-                                    <button class="success" onclick="app.addLog()">Save Entry</button>
-                                    <button class="danger" onclick="app.finishW()">Finish & Store</button>
+                                    <input type="date" id="fd">                  
+                                    <input type="number" step="0.1" id="fh" placeholder="Hours">
+                                    <input type="number" id="ft" placeholder="Tours">
+                                    <input type="number" id="fi" placeholder="Interviews">
+                                    <input type="text" id="fw" placeholder="Warning">
+                                    <button style="background:var(--success)" onclick="app.addLog()">Save Entry</button>
+                                    <button style="background:var(--danger)" onclick="app.finishW()">Finish & Store</button>
                                 </div><div id="live-view"></div>`;
                             }
                         } else { html += `<div id="live-view"></div>`; }
                         break;
 
                     case 'promo':
-                        html = `<h3>Leader Bord</h3>
-                            <button style="background:var(--gold)" onclick="app.calcPromo()">🔄 Calculate High score</button>
-                            <div id="promo-res" style="margin-top:15px"></div>`;
+                        html = `<h3>Leader Board</h3>`;
+                        if(['owner', 'editor'].includes(this.user.role)) {
+                            const history = this.data.history || [];
+                            html += `<div class="card">
+                                <label>Select File:</label>
+                                <select id="lb-file-select">
+                                    ${history.map((h, idx) => `<option value="${idx}">${h.title}</option>`).join('')}
+                                </select>
+                                <button style="background:var(--gold)" onclick="app.publishLB()">🔄 Publish Result</button>
+                                <button style="background:var(--danger); margin-top:5px;" onclick="app.closeLB()">🔒 Close Board</button>
+                            </div>`;
+                        }
+                        html += `<div id="promo-res"></div>`;
                         break;
 
                     case 'stored':
-                        html = `<h3>Store Files</h3>`;
+                        html = `<h3>Stored Files</h3>`;
                         (this.data.history || []).forEach((h, i) => {
                             html += `<div class="card" onclick="app.viewF(${i})">📂 ${h.title}</div>
                                 ${this.user.role === 'owner' ? `<button class="btn-del" onclick="app.delF(${i})">Del</button>` : ''}`;
                         });
                         break;
 
-                    case 'bank':
-                        html = `<h3>Bank Control</h3>
-                            <select id="b-u">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select>
-                            <input type="number" id="b-p" placeholder="Points">
-                            <input type="text" id="b-w" placeholder="Update Warning">
-                            <button onclick="app.manualBank()">Update Admin</button>`;
-                        break;
-
                     case 'access':
-                        html = `<h3>Manage Requests</h3>`;
-                        const requests = this.data.requests || [];
-                        if(requests.length === 0) html += "<p>No pending requests.</p>";
-                        requests.forEach((r, i) => {
-                            html += `<div class="card"><b>${r.name}</b> (${r.lvl})<br><br>
-                                <button class="btn-approve" onclick="app.approve(${i})">✔ Approve</button>
-                                <button class="btn-reject" onclick="app.reject(${i})">✖ Reject</button></div>`;
+                        html = `<h3>Applications</h3>`;
+                        const reqs = this.data.requests || [];
+                        reqs.forEach((r, i) => {
+                            html += `<div class="card"><b>${r.name}</b> (${r.lvl})<br>
+                                <button style="background:var(--success); width:48%" onclick="app.approve(${i})">✔</button>
+                                <button style="background:var(--danger); width:48%" onclick="app.reject(${i})">✖</button></div>`;
                         });
                         break;
                 }
                 area.innerHTML = html;
+                if(page === 'promo') this.renderLB();
                 if(page === 'weekly') this.renderLive();
             },
 
-            approve(i) {
-                const r = this.data.requests[i];
-                const code = Math.floor(1000 + Math.random()*8999).toString();
-                if(!this.data.admins) this.data.admins = [];
-                this.data.admins.push({ name: r.name, lvl: r.lvl, bank: 0, warnings: 'None', passcode: code, role: 'admin' });
-                this.data.requests.splice(i, 1);
-                this.save(); alert("Approved! Code: " + code); this.nav('access');
+            updateRules() {
+                const text = document.getElementById('rule-input').value;
+                const now = new Date();
+                this.data.appRules = text;
+                this.data.ruleAuthor = this.user.name;
+                this.data.ruleDate = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+                this.save();
+                alert("Rules Posted!");
+                this.nav('rules');
             },
 
-            reject(i) {
-                if(confirm("Reject this application?")) { this.data.requests.splice(i, 1); this.save(); this.nav('access'); }
-            },
-
-            calcPromo() {
-                if(!this.data.history || this.data.history.length === 0) return alert("No stored data.");
-                const lastFile = this.data.history[this.data.history.length - 1];
-                const stats = {};
-                const blocked = ["V1", "V2", "W1", "W2", "W3"];
-                lastFile.logs.forEach(l => {
-                    if(!stats[l.n]) stats[l.n] = { pts: 0, hasWarning: false, w: "" };
-                    stats[l.n].pts += l.pts;
-                    if(l.w && blocked.includes(l.w.toUpperCase())) { stats[l.n].hasWarning = true; stats[l.n].w = l.w.toUpperCase(); }
-                });
-                let resHtml = `<h4>Results:</h4>`;
-                const adminsList = this.data.admins || [];
-                for(let name in stats) {
-                    const a = adminsList.find(x => x.name === name);
-                    if(!a) continue;
-                    if(!stats[name].hasWarning && stats[name].pts >= 12) {
-                        resHtml += `<div class="card" style="border-left:5px solid var(--success)">🏆 <b>${name}</b> High Score | Points: ${stats[name].pts}</div>`;
-                    } else if(stats[name].hasWarning) {
-                        resHtml += `<div class="card" style="border-left:5px solid var(--danger)">❌ <b>${name}</b> Cancelled (Reason: ${stats[name].w})</div>`;
-                    }
+            manualBank() {
+                const name = document.getElementById('b-u').value;
+                if(this.user.role === 'editor' && name === this.user.name) {
+                    return alert("Restriction: You cannot edit your own points/warnings!");
                 }
-                document.getElementById('promo-res').innerHTML = resHtml;
+                const pts = parseInt(document.getElementById('b-p').value) || 0;
+                const warn = document.getElementById('b-w').value || "None";
+                const admin = this.data.admins.find(x => x.name === name);
+                if(admin) {
+                    admin.bank = (admin.bank || 0) + pts;
+                    admin.warnings = warn;
+                    this.save();
+                    alert("Admin Bank Updated!");
+                    this.nav('bank');
+                }
             },
 
-            startW() {
-                const t = document.getElementById('wt').value; if(!t) return;
-                this.data.activeWeek = { title: t, logs: [] };
-                this.save(); this.nav('weekly');
-            },
-
+            startW() { const t = document.getElementById('wt').value; if(t) { this.data.activeWeek = {title:t, logs:[]}; this.save(); this.nav('weekly'); }},
+            
             addLog() {
                 const n = document.getElementById('sel-n').value;
                 const d = document.getElementById('fd').value;
+                if(!d) return alert("Please select a date!");
+                if(this.user.role === 'editor' && n === this.user.name) {
+                    return alert("Restriction: You cannot add points to your own account via Weekly Reports!");
+                }
                 const h = parseFloat(document.getElementById('fh').value)||0;
                 const t = parseInt(document.getElementById('ft').value)||0;
                 const i = parseInt(document.getElementById('fi').value)||0;
-                const w = document.getElementById('fw').value;
+                const w = document.getElementById('fw').value || 'None';
                 if(!this.data.activeWeek.logs) this.data.activeWeek.logs = [];
                 this.data.activeWeek.logs.push({ n, d, h, t, i, w, pts: h + (t*10) + (i*2) });
-                this.save(); this.renderLive();
+                this.save(); 
+                document.getElementById('fh').value = ""; document.getElementById('ft').value = "";
+                document.getElementById('fi').value = ""; document.getElementById('fw').value = "";
+                this.renderLive();
             },
 
             renderLive() {
                 const div = document.getElementById('live-view');
                 if(!div || !this.data.activeWeek || !this.data.activeWeek.logs) return;
-                div.innerHTML = "<h4>Live Stats:</h4>" + this.data.activeWeek.logs.slice().reverse().map(l => `<div class="card" style="font-size:11px">${l.n}: ${l.pts} Pts | Warn: ${l.w || 'None'}</div>`).join('');
+                div.innerHTML = "<h4>Live Stats (Recent First):</h4>" + this.data.activeWeek.logs.slice().reverse().map(l=>
+                    `<div class="card" style="font-size:11px; border-left:3px solid var(--primary)">
+                        <b>${l.n}</b> | ${l.d} | ${l.pts} Pts<br>
+                        <small>H:${l.h}, T:${l.t}, Int:${l.i}, Warn:${l.w}</small>
+                    </div>`
+                ).join('');
             },
 
             finishW() {
+                if(!confirm("Store this file and update admin banks?")) return;
                 this.data.activeWeek.logs.forEach(l => {
                     const a = this.data.admins.find(x => x.name === l.n);
                     if(a) { a.bank = (a.bank || 0) + l.pts; a.warnings = l.w; }
                 });
                 if(!this.data.history) this.data.history = [];
                 this.data.history.push(this.data.activeWeek);
-                this.data.activeWeek = null;
-                this.save(); this.nav('stored');
+                this.data.activeWeek = null; this.save(); this.nav('stored');
             },
 
+            viewAdminProfile(i) {
+                const a = this.data.admins[i];
+                const isOwner = this.user.role === 'owner';
+                document.getElementById('screen').innerHTML = `<h3>Admin Profile</h3>
+                <div class="card">
+                    <label>Name</label><input id="ed-n" value="${a.name}" ${!isOwner?'disabled':''}>
+                    <label>Level</label><input id="ed-l" value="${a.lvl}" ${!isOwner?'disabled':''}>
+                    <label>Points</label><input type="number" id="ed-b" value="${a.bank||0}" ${!isOwner?'disabled':''}>
+                    <label>Warnings</label><input id="ed-w" value="${a.warnings}" ${!isOwner?'disabled':''}>
+                    <label>Passcode</label>
+                    <input type="text" id="ed-p" value="${isOwner ? a.passcode : '********'}" ${!isOwner?'disabled':''}>
+                    ${isOwner ? `<button style="background:var(--success)" onclick="app.updateAdmin(${i})">Save Changes</button>` : '<p style="color:grey; font-size:12px; text-align:center;">View Only Mode</p>'}
+                    <button onclick="app.nav('curr-admins')">Back</button>
+                </div>`;
+            },
+
+            updateAdmin(i) {
+                const a = this.data.admins[i];
+                if(this.user.role !== 'owner') return alert("Unauthorized");
+                a.name = document.getElementById('ed-n').value;
+                a.lvl = document.getElementById('ed-l').value;
+                a.bank = parseInt(document.getElementById('ed-b').value);
+                a.warnings = document.getElementById('ed-w').value;
+                a.passcode = document.getElementById('ed-p').value;
+                this.save(); alert("Updated Successfully!"); this.nav('curr-admins');
+            },
+
+            publishLB() {
+                const idx = document.getElementById('lb-file-select').value;
+                if(idx === "") return;
+                this.data.lbStatus = 'published';
+                this.data.lbFileIndex = parseInt(idx);
+                this.save(); this.renderLB();
+            },
+            closeLB() { this.data.lbStatus = 'closed'; this.save(); this.renderLB(); },
+            renderLB() {
+                const div = document.getElementById('promo-res');
+                if(!div) return;
+                if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) {
+                    div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is currently closed.</p>";
+                    return;
+                }
+                const file = this.data.history[this.data.lbFileIndex];
+                if(!file) return;
+                const stats = {};
+                file.logs.forEach(l => {
+                    if(!stats[l.n]) stats[l.n] = { n: l.n, pts: 0, w: "" };
+                    stats[l.n].pts += l.pts;
+                    if(l.w && ["V1","V2","W1","W2","W3"].includes(l.w.toUpperCase())) stats[l.n].w = l.w.toUpperCase();
+                });
+                const sorted = Object.values(stats).sort((a,b)=>b.pts - a.pts);
+                div.innerHTML = `<h4>Ranking: ${file.title}</h4>` + sorted.map((s,i)=>`
+                    <div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}">
+                        <b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w?`<br><small>Cancelled: ${s.w}</small>`:''}
+                    </div>`).join('');
+            },
             viewF(i) {
                 const f = this.data.history[i];
                 let h = `<h3>${f.title}</h3><button onclick="app.nav('stored')">Back</button><br><br>`;
-                f.logs.forEach(l => h += `<div class="card"><b>${l.n}</b>: ${l.pts} Pts | Warn: ${l.w || 'None'}</div>`);
+                f.logs.forEach(l => {
+                    let dParts = l.d ? l.d.split('-') : ["??","??","??"];
+                    let formattedDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
+                    h += `<div class="card" style="font-size:13px; line-height:1.6;">
+                            <b>${l.n}</b><br>
+                            <span style="color:#555;">${formattedDate} - H:${l.h}. T:${l.t}. Interview:${l.i}. Warn: ${l.w}</span><br>
+                            <small>Total Points in entry: <b>${l.pts}</b></small>
+                          </div>`;
+                });
                 document.getElementById('screen').innerHTML = h;
             },
-
-            manualBank() {
-                const a = this.data.admins.find(x => x.name === document.getElementById('b-u').value);
-                if(a) { a.bank = (a.bank||0) + (parseInt(document.getElementById('b-p').value)||0); a.warnings = document.getElementById('b-w').value; this.save(); alert("Updated"); this.nav('profile'); }
+            changeLvl(i) { this.data.admins[i].lvl = document.getElementById(`lvl-up-${i}`).value; this.save(); this.nav('curr-admins'); },
+            setRole(i, r) { this.data.admins[i].role = r; this.save(); this.nav('curr-admins'); },
+            kick(i) { 
+                const target = this.data.admins[i];
+                if(this.user.role === 'editor' && target.name === this.user.name) return alert("You cannot kick yourself!");
+                if(confirm(`Are you sure you want to kick ${target.name}?`)) { 
+                    this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); 
+                }
             },
-
+            delF(i) { if(confirm("Delete?")) { this.data.history.splice(i,1); this.save(); this.nav('stored'); }},
+            approve(i) {
+                const r = this.data.requests[i];
+                const code = Math.floor(1000 + Math.random()*8999).toString();
+                if(!this.data.admins) this.data.admins = [];
+                this.data.admins.push({ name: r.name, lvl: r.lvl, bank: 0, warnings: 'None', passcode: code, role: 'admin' });
+                this.data.requests.splice(i, 1); this.save(); alert("Approved! Code: " + code); this.nav('access');
+            },
+            reject(i) { this.data.requests.splice(i,1); this.save(); this.nav('access'); },
             requestAccess() {
                 const n = document.getElementById('req-n').value;
                 const l = document.getElementById('req-lvl').value;
-                if(!n || !l) return alert("Fill all fields");
-                if(!this.data.requests) this.data.requests = [];
-                this.data.requests.push({ name: n, lvl: l });
-                this.save(); alert("Sent!");
+                if(n && l) {
+                    if(!this.data.requests) this.data.requests = [];
+                    this.data.requests.push({name: n, lvl: l});
+                    this.save(); alert("Application Sent!");
+                }
             },
-
-            changeLvl(i) { this.data.admins[i].lvl = document.getElementById(`lvl-up-${i}`).value; this.save(); this.nav('curr-admins'); },
-            setRole(i, r) { if(this.user.role === 'editor' && this.data.admins[i].name === this.user.name) return; this.data.admins[i].role = r; this.save(); this.nav('curr-admins'); },
-            kick(i) { if(confirm("Kick?")) { this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); }},
-            delF(i) { if(confirm("Delete?")) { this.data.history.splice(i,1); this.save(); this.nav('stored'); }},
             toggleMenu(s) { document.getElementById('menu-overlay').classList.toggle('active', s); },
             logout() { location.reload(); }
         };
-
         app.init();
     </script>
 </body>

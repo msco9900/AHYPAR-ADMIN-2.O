@@ -152,7 +152,7 @@
                         if(this.user.role === 'owner') {
                             html += `<div class="card" style="margin-top:15px; border-top: 2px solid var(--danger);">
                                 <h4>Change Master Key</h4>
-                                <input type="text" id="new-master" value="${this.data.ownerKey}">
+                                <input type="password" id="new-master" value="${this.data.ownerKey}">
                                 <button style="background:var(--danger)" onclick="app.updateMasterKey()">Update Master Key</button>
                             </div>`;
                         }

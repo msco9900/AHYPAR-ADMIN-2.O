@@ -1,8 +1,9 @@
-<!DOCTYPE html>  <html lang="en">  
+<!DOCTYPE html>  
+<html lang="en">  
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
-    <title>AHYPAR Administration </title>  
+    <title>AHYPAR Administration</title>  
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>  
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>  
     <style>  
@@ -13,30 +14,28 @@
         }  
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }  
         body { background: var(--bg); color: var(--text); }  
-        .hidden { display: none !important; }  header { background: #fff; border-bottom: 2px solid #e3e5e8; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }  
-    .golden-text { color: var(--gold); font-weight: 800; text-transform: uppercase; }  
-    .owner-label { font-size: 10px; color: #888; display: block; font-weight: bold; }  
-
-    .container { padding: 15px; max-width: 500px; margin: auto; }  
-    .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e3e5e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }  
-      
-    input, select, button, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }  
-    button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }  
-      
-    .menu-overlay { position: fixed; top: 0; right: 0; width: 85%; max-width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: -10px 0 20px rgba(0,0,0,0.1); transform: translateX(100%); transition: 0.3s; padding: 20px; }  
-    .menu-overlay.active { transform: translateX(0); }  
-    .menu-item { padding: 16px; border-bottom: 1px solid #eee; font-weight: bold; cursor: pointer; }  
-
-    .role-btn { width: auto; padding: 5px 10px; font-size: 10px; background: #ddd; color: #555; margin-right: 2px; border:none; border-radius:4px; margin-top: 5px;}  
-    .active-role { background: var(--black) !important; color: white !important; }  
-    .btn-del { background: var(--danger); width: auto; float: right; padding: 4px 8px; font-size: 10px; margin-top: -30px; }  
-    .rule-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; white-space: pre-wrap; margin-top: 10px; }  
-    .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }  
-    .tag-span { color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}  
-</style>
-
+        .hidden { display: none !important; }  
+        header { background: #fff; border-bottom: 2px solid #e3e5e8; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }  
+        .golden-text { color: var(--gold); font-weight: 800; text-transform: uppercase; }  
+        .owner-label { font-size: 10px; color: #888; display: block; font-weight: bold; }  
+        .container { padding: 15px; max-width: 500px; margin: auto; }  
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e3e5e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }  
+        input, select, button, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }  
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }  
+        .menu-overlay { position: fixed; top: 0; right: 0; width: 85%; max-width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: -10px 0 20px rgba(0,0,0,0.1); transform: translateX(100%); transition: 0.3s; padding: 20px; }  
+        .menu-overlay.active { transform: translateX(0); }  
+        .menu-item { padding: 16px; border-bottom: 1px solid #eee; font-weight: bold; cursor: pointer; }  
+        .role-btn { width: auto; padding: 5px 10px; font-size: 10px; background: #ddd; color: #555; margin-right: 2px; border:none; border-radius:4px; margin-top: 5px;}  
+        .active-role { background: var(--black) !important; color: white !important; }  
+        .btn-del { background: var(--danger); width: auto; float: right; padding: 4px 8px; font-size: 10px; margin-top: -30px; }  
+        .rule-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; white-space: pre-wrap; margin-top: 10px; }  
+        .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }  
+        .tag-span { color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}  
+    </style>
 </head>  
-<body>  <div id="login-view" class="container">  
+<body>  
+
+<div id="login-view" class="container">  
     <div class="card" style="text-align: center; margin-top: 50px;">  
         <h2 class="golden-text">Admin Login</h2>  
         <input type="password" id="login-pass" placeholder="Enter Passcode">  
@@ -69,10 +68,8 @@
         <div class="menu-item" onclick="app.nav('promo')">🎖️ Leader Board </div>  
         <div class="menu-item section-view hidden" onclick="app.nav('stored')">📁 Store Files</div>  
         <div class="menu-item section-hr hidden" onclick="app.nav('access')">🔐 Manage Requests</div>  
-          
         <div class="menu-item" onclick="app.logout()" style="color:var(--danger)">Logout</div>  
     </div>  
-
     <div class="container" id="screen"></div>  
 </div>  
 
@@ -122,12 +119,10 @@
             document.getElementById('login-view').classList.add('hidden');  
             document.getElementById('dashboard-view').classList.remove('hidden');  
             document.getElementById('h-user').innerText = this.user.name;  
-              
             const role = this.user.role;  
             document.querySelectorAll('.menu-item').forEach(el => {  
                 if(el.classList.contains('section-view') || el.classList.contains('section-hr') || el.classList.contains('section-editor')) el.classList.add('hidden');  
             });  
-
             if(['owner', 'editor', 'view', 'hr', 'high_command'].includes(role)) document.querySelectorAll('.section-view').forEach(el => el.classList.remove('hidden'));  
             if(['owner', 'hr', 'editor', 'high_command'].includes(role)) document.querySelectorAll('.section-hr').forEach(el => el.classList.remove('hidden'));  
             if(['owner', 'editor', 'high_command'].includes(role)) document.querySelectorAll('.section-editor').forEach(el => el.classList.remove('hidden'));  
@@ -143,7 +138,6 @@
                 case 'profile':  
                     const me = (this.user.role === 'owner') ? this.user : (adminsList.find(x => x.name === this.user.name) || this.user);  
                     html = `<div class="card" style="text-align:center"><h3>${me.name}</h3><p>${me.lvl}</p><div style="color:red">Warn: ${me.warnings || 'None'}</div><hr><small>Bank</small><br><b>${me.bank || 0}</b></div>`;  
-                      
                     if(this.user.role === 'owner') {  
                         html += `<div class="card" style="margin-top:15px; border-top: 2px solid var(--danger);">  
                             <h4>Change Master Key</h4>  
@@ -163,78 +157,60 @@
                     html += `<div class="rule-box">${meta}${this.data.appRules || "Rules will appear here."}</div>`;  
                     break;  
 
-                case 'bank':  
-                    html = `<h3>Bank Control</h3>  
-                        <div class="card">  
-                            <label>Admin Name</label>  
-                            <select id="b-u">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select>  
-                            <label>Points (Use - to subtract)</label>  
-                            <input type="number" id="b-p" placeholder="Points">  
-                            <label>Update Warning</label>  
-                            <input type="text" id="b-w" placeholder="Warning Status">  
-                            <button style="background:var(--success)" onclick="app.manualBank()">Update Profile</button>  
-                        </div>`;  
-                    break;  
+                case 'curr-admins':
+                    html = `<h3>Current Admin</h3>`;
+                    const isOwner = this.user.role === 'owner';
+                    const isEditor = this.user.role === 'editor';
+                    const isHC = this.user.role === 'high_command';
+                    
+                    let oInfo = this.data.ownerInfo || {tag: 'OWNER', tagColor: '#d4af37', boxColor: '#fff8dc'};
+                    html += `<div class="card" style="background:${oInfo.boxColor}; border: 1px solid ${oInfo.tagColor};">
+                        <b>Shafin_Mirza</b> <span class="tag-span" style="background:${oInfo.tagColor}">${oInfo.tag}</span>
+                        <br><small>Project Owner</small>`;
+                    if(isOwner) {
+                        html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">
+                            <small>Tag Name:</small> <input id="ow-t" value="${oInfo.tag}" style="width:30%; padding:5px; margin-right:2px">
+                            <small>Tag Color:</small> <input type="color" id="ow-tc" value="${oInfo.tagColor}" style="width:15%; padding:0; margin-right:2px">
+                            <small>Box Color:</small> <input type="color" id="ow-bc" value="${oInfo.boxColor}" style="width:15%; padding:0">
+                            <button class="role-btn" onclick="app.setOwnerStyle()" style="background:var(--primary); color:white">Set Style</button>
+                        </div>`;
+                    }
+                    html += `</div>`;
 
-                case 'curr-admins':  
-                    html = `<h3>Current Admin</h3>`;  
-                    const isOwner = this.user.role === 'owner';  
-                    const isEditor = this.user.role === 'editor';  
-                    const isHC = this.user.role === 'high_command';  
+                    adminsList.forEach((a, i) => {
+                        let aTag = a.tag ? `<span class="tag-span" style="background:${a.tagColor||'#555'}">${a.tag}</span>` : '';
+                        html += `<div class="card" style="background:${a.boxColor || 'var(--card)'}">
+                            <b>${a.name}</b> ${aTag} - <small>${a.lvl}</small>`;
+                        
+                        let canViewProfile = isOwner || (isHC && ['admin', 'editor', 'view', 'hr'].includes(a.role));
+                        if(canViewProfile) { 
+                            html += `<button class="role-btn" style="float:right; background:var(--primary); color:white" onclick="app.viewAdminProfile(${i})">👁️ Profile</button>`; 
+                        }
 
-                    let oInfo = this.data.ownerInfo || {tag: 'OWNER', tagColor: '#d4af37', boxColor: '#fff8dc'};  
-                    html += `<div class="card" style="background:${oInfo.boxColor}; border: 1px solid ${oInfo.tagColor};">  
-                        <b>Shafin_Mirza</b> <span class="tag-span" style="background:${oInfo.tagColor}">${oInfo.tag}</span>  
-                        <br><small>Project Owner</small>`;  
-                    if(isOwner) {  
-                        html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">  
-                            <small>Tag Name:</small> <input id="ow-t" value="${oInfo.tag}" style="width:30%; padding:5px; margin-right:2px">  
-                            <small>Tag Color:</small> <input type="color" id="ow-tc" value="${oInfo.tagColor}" style="width:15%; padding:0; margin-right:2px">  
-                            <small>Box Color:</small> <input type="color" id="ow-bc" value="${oInfo.boxColor}" style="width:15%; padding:0">  
-                            <button class="role-btn" onclick="app.setOwnerStyle()" style="background:var(--primary); color:white">Set Style</button>  
-                        </div>`;  
-                    }  
-                    html += `</div>`;  
+                        html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">`;
+                        
+                        let isJunior = false;
+                        if (isEditor && ['admin', 'view', 'hr'].includes(a.role)) isJunior = true;
+                        if (isHC && ['admin', 'view', 'hr', 'editor'].includes(a.role)) isJunior = true;
 
-                    adminsList.forEach((a, i) => {  
-                        let aTag = a.tag ? `<span class="tag-span" style="background:${a.tagColor||'#555'}">${a.tag}</span>` : '';  
-                        html += `<div class="card" style="background:${a.boxColor || 'var(--card)'}">  
-                            <b>${a.name}</b> ${aTag} - <small>${a.lvl}</small>`;  
-                          
-                        let canView = isOwner || isEditor || (isHC && a.role !== 'high_command');  
-                        if(canView) {  
-                            html += `<button class="role-btn" style="float:right; background:var(--primary); color:white" onclick="app.viewAdminProfile(${i})">👁️ Profile</button>`;  
-                        }  
-
-                        html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">`;  
-                              
-                        if(isOwner) {  
-                            html += `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>  
-                            <div style="margin-top:5px; margin-bottom:5px">  
-                                <input id="tg-${i}" placeholder="Tag" value="${a.tag||''}" style="width:30%; padding:5px; margin-right:2px">  
-                                <input type="color" id="tc-${i}" value="${a.tagColor||'#555555'}" style="width:15%; padding:0; margin-right:2px">  
-                                <input type="color" id="bc-${i}" value="${a.boxColor||'#f6f7f9'}" style="width:15%; padding:0">  
-                                <button class="role-btn" onclick="app.setAdminStyle(${i})" style="background:var(--primary); color:white">Set Style</button>  
-                            </div>`;  
-                        }  
-                          
-                        let canEditRoles = isOwner || (isEditor && a.name !== this.user.name) || (isHC && a.name !== this.user.name && a.role !== 'high_command');  
-                          
-                        if(canEditRoles) {  
-                            html += `<button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>  
-                                     <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>  
-                                     <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>  
-                                     <button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>`;  
-                        }  
-                          
-                        if(isOwner) {  
-                            html += `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>  
-                                     <button class="role-btn ${a.role==='high_command'?'active-role':''}" style="background:var(--gold); color:black" onclick="app.setRole(${i},'high_command')">High Command</button>`;  
-                        }  
-                          
-                        html += `</div></div>`;  
-                    });  
-                    break;  
+                        if(isOwner || isJunior) {
+                            if(isOwner) {
+                                html += `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>`;
+                            }
+                            
+                            html += `<button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>
+                                     <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>
+                                     <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>
+                                     <button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>`;
+                            
+                            if(isOwner) {
+                                html += `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>
+                                         <button class="role-btn ${a.role==='high_command'?'active-role':''}" style="background:var(--gold); color:black" onclick="app.setRole(${i},'high_command')">High Command</button>`;
+                            }
+                        }
+                        html += `</div></div>`;
+                    });
+                    break;
 
                 case 'weekly':  
                     html = `<h3>Weekly Reports</h3>`;  
@@ -297,6 +273,29 @@
             if(page === 'weekly') this.renderLive();  
         },  
 
+        renderLive() {  
+            const div = document.getElementById('live-view');  
+            if(!div || !this.data.activeWeek || !this.data.activeWeek.logs) return;  
+            const isOwner = this.user.role === 'owner'; 
+            div.innerHTML = "<h4>Live Stats (Recent First):</h4>" + 
+                this.data.activeWeek.logs.slice().reverse().map((l, index) => {
+                    const realIndex = this.data.activeWeek.logs.length - 1 - index;
+                    return `<div class="card" style="font-size:11px; border-left:3px solid var(--primary)">  
+                        ${isOwner ? `<button class="btn-del" onclick="app.deleteLog(${realIndex})" style="margin-top:0px;">Del</button>` : ''}
+                        <b>${l.n}</b> | ${l.d} | ${l.pts} Pts<br>  
+                        <small>H:${l.h}, T:${l.t}, Int:${l.i}, Warn:${l.w}</small>  
+                    </div>`;
+                }).join('');  
+        },
+
+        deleteLog(index) { 
+            if(confirm("Are you sure?")) {
+                this.data.activeWeek.logs.splice(index, 1);
+                this.save();
+                this.renderLive();
+            }
+        },
+
         updateMasterKey() {  
             const nk = document.getElementById('new-master').value;  
             if(nk.trim() === '') return alert("Key cannot be empty!");  
@@ -333,32 +332,12 @@
             this.nav('rules');  
         },  
 
-        manualBank() {  
-            const name = document.getElementById('b-u').value;  
-            if((this.user.role === 'editor' || this.user.role === 'high_command') && name === this.user.name) {  
-                return alert("Restriction: You cannot edit your own points/warnings!");  
-            }  
-            const pts = parseInt(document.getElementById('b-p').value) || 0;  
-            const warn = document.getElementById('b-w').value || "None";  
-            const admin = this.data.admins.find(x => x.name === name);  
-            if(admin) {  
-                admin.bank = (admin.bank || 0) + pts;  
-                admin.warnings = warn;  
-                this.save();  
-                alert("Admin Bank Updated!");  
-                this.nav('bank');  
-            }  
-        },  
-
         startW() { const t = document.getElementById('wt').value; if(t) { this.data.activeWeek = {title:t, logs:[]}; this.save(); this.nav('weekly'); }},  
-          
         addLog() {  
             const n = document.getElementById('sel-n').value;  
             const d = document.getElementById('fd').value;  
             if(!d) return alert("Please select a date!");  
-            if((this.user.role === 'editor' || this.user.role === 'high_command') && n === this.user.name) {  
-                return alert("Restriction: You cannot add points to your own account via Weekly Reports!");  
-            }  
+            if((this.user.role === 'editor' || this.user.role === 'high_command') && n === this.user.name) { return alert("Restriction: You cannot add points to your own account via Weekly Reports!"); }  
             const h = parseFloat(document.getElementById('fh').value)||0;  
             const t = parseInt(document.getElementById('ft').value)||0;  
             const i = parseInt(document.getElementById('fi').value)||0;  
@@ -369,17 +348,6 @@
             document.getElementById('fh').value = ""; document.getElementById('ft').value = "";  
             document.getElementById('fi').value = ""; document.getElementById('fw').value = "";  
             this.renderLive();  
-        },  
-
-        renderLive() {  
-            const div = document.getElementById('live-view');  
-            if(!div || !this.data.activeWeek || !this.data.activeWeek.logs) return;  
-            div.innerHTML = "<h4>Live Stats (Recent First):</h4>" + this.data.activeWeek.logs.slice().reverse().map(l=>  
-                `<div class="card" style="font-size:11px; border-left:3px solid var(--primary)">  
-                    <b>${l.n}</b> | ${l.d} | ${l.pts} Pts<br>  
-                    <small>H:${l.h}, T:${l.t}, Int:${l.i}, Warn:${l.w}</small>  
-                </div>`  
-            ).join('');  
         },  
 
         finishW() {  
@@ -395,63 +363,46 @@
 
         viewAdminProfile(i) {
             const a = this.data.admins[i];
-
-            if(this.user.role === 'high_command' && a.role === 'high_command') {
-                return alert("Restriction: High Command cannot view another High Command's profile.");
-            }
-
             const isOwner = this.user.role === 'owner';
             const isHC = this.user.role === 'high_command';
+            const isEditor = this.user.role === 'editor';
 
-            const hcCanEdit = isHC && a.name !== this.user.name && !['owner', 'high_command'].includes(a.role);
-            const canEdit = isOwner || hcCanEdit;
+            if (isEditor) return alert("Access Denied: Editors are not allowed to view profiles.");
+            
+            const canAccess = isOwner || (isHC && !['owner', 'high_command'].includes(a.role));
+            if (!canAccess) return alert("Restriction: You cannot view this profile.");
 
-            document.getElementById('screen').innerHTML = `<h3>Admin Profile</h3>
-            <div class="card">
-                <label>Name</label><input id="ed-n" value="${a.name}" ${!isOwner ? 'disabled' : ''}>
-                <label>Level</label><input id="ed-l" value="${a.lvl}" ${canEdit ? '' : 'disabled'}>
-                <label>Points</label><input type="text" id="ed-b" value="${a.bank||0}" ${canEdit ? '' : 'disabled'}>
-                <label>Warnings</label><input id="ed-w" value="${a.warnings}" ${canEdit ? '' : 'disabled'}>
-                <label>Passcode</label>
-                <input type="text" id="ed-p" value="${canEdit ? a.passcode : '********'}" ${canEdit ? '' : 'disabled'}>
-
-                ${canEdit
-                    ? `<button style="background:var(--success)" onclick="app.updateAdmin(${i})">Save Changes</button>`
-                    : '<p style="color:grey; font-size:12px; text-align:center;">View Only Mode</p>'}
-
-                <button onclick="app.nav('curr-admins')">Back</button>
-            </div>`;
+            document.getElementById('screen').innerHTML = `
+                <h3>Admin Profile</h3>
+                <div class="card">
+                    <label>Name</label><input id="ed-n" value="${a.name}" ${!isOwner ? 'disabled' : ''}>
+                    <label>Level</label><input id="ed-l" value="${a.lvl}">
+                    <label>Points</label><input type="number" id="ed-b" value="${a.bank || 0}">
+                    <label>Warnings</label><input id="ed-w" value="${a.warnings || 'None'}">
+                    <label>Passcode</label><input type="text" id="ed-p" value="${a.passcode}">
+                    <div style="margin-top:15px;">
+                        <button style="background:var(--success); margin-bottom:10px;" onclick="app.updateAdmin(${i})">Save Changes</button>
+                        <button style="background:var(--black);" onclick="app.nav('curr-admins')">Back</button>
+                    </div>
+                </div>`;
         },
 
         updateAdmin(i) {
             const a = this.data.admins[i];
             const isOwner = this.user.role === 'owner';
             const isHC = this.user.role === 'high_command';
+            if (!isOwner && !(isHC && !['owner', 'high_command'].includes(a.role))) return alert("Unauthorized");
 
-            const hcCanEdit = isHC && a.name !== this.user.name && !['owner', 'high_command'].includes(a.role);
-
-            if(!isOwner && !hcCanEdit) {
-                return alert("Unauthorized");
-            }
-
-            if(isOwner) {
-                a.name = document.getElementById('ed-n').value;
-            }
-
+            if (isOwner) a.name = document.getElementById('ed-n').value;
             a.lvl = document.getElementById('ed-l').value;
-           a.bank = document.getElementById('ed-b').value;
+            a.bank = parseInt(document.getElementById('ed-b').value) || 0;
             a.warnings = document.getElementById('ed-w').value;
             a.passcode = document.getElementById('ed-p').value;
-
-            this.save();
-            alert("Updated Successfully!");
-            this.nav('curr-admins');
+            this.save(); alert("Updated Successfully!"); this.nav('curr-admins');
         },
 
         setLBStatus(status) {  
-            if(status === 'closed') {  
-                this.data.lbStatus = 'closed';  
-            } else {  
+            if(status === 'closed') { this.data.lbStatus = 'closed'; } else {  
                 const idx = document.getElementById('lb-file-select').value;  
                 if(idx === "") return;  
                 this.data.lbStatus = status;  
@@ -463,17 +414,8 @@
         renderLB() {  
             const div = document.getElementById('promo-res');  
             if(!div) return;  
-              
-            if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) {  
-                div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is currently closed.</p>";  
-                return;  
-            }  
-
-            if(this.data.lbStatus === 'published_hc' && !['owner', 'high_command'].includes(this.user.role)) {  
-                div.innerHTML = "<p style='text-align:center; color:grey; font-weight:bold;'>Leader Board results are currently visible to High Command only.</p>";  
-                return;  
-            }  
-
+            if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) { div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is currently closed.</p>"; return; }  
+            if(this.data.lbStatus === 'published_hc' && !['owner', 'high_command'].includes(this.user.role)) { div.innerHTML = "<p style='text-align:center; color:grey; font-weight:bold;'>Leader Board results are currently visible to High Command only.</p>"; return; }  
             const file = this.data.history[this.data.lbFileIndex];  
             if(!file) return;  
             const stats = {};  
@@ -483,12 +425,8 @@
                 if(l.w && ["V1","V2","W1","W2","W3"].includes(l.w.toUpperCase())) stats[l.n].w = l.w.toUpperCase();  
             });  
             const sorted = Object.values(stats).sort((a,b)=>b.pts - a.pts);  
-              
-            let boardType = this.data.lbStatus === 'published_hc' ? ' (High Command Only)' : ' (Public)';  
-            div.innerHTML = `<h4>Ranking: ${file.title}${boardType}</h4>` + sorted.map((s,i)=>`  
-                <div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}">  
-                    <b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w?`<br><small>Cancelled: ${s.w}</small>`:''}  
-                </div>`).join('');  
+            let boardType = this.data.lbStatus === 'published_hc' ? ' (HC Only)' : ' (Public)';  
+            div.innerHTML = `<h4>Ranking: ${file.title}${boardType}</h4>` + sorted.map((s,i)=>`<div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}"><b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w?`<br><small>Cancelled: ${s.w}</small>`:''}</div>`).join('');  
         },  
 
         viewF(i) {  
@@ -496,12 +434,7 @@
             let h = `<h3>${f.title}</h3><button onclick="app.nav('stored')">Back</button><br><br>`;  
             f.logs.forEach(l => {  
                 let dParts = l.d ? l.d.split('-') : ["??","??","??"];  
-                let formattedDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;  
-                h += `<div class="card" style="font-size:13px; line-height:1.6;">  
-                        <b>${l.n}</b><br>  
-                        <span style="color:#555;">${formattedDate} - H:${l.h}. T:${l.t}. Interview:${l.i}. Warn: ${l.w}</span><br>  
-                        <small>Total Points in entry: <b>${l.pts}</b></small>  
-                      </div>`;  
+                h += `<div class="card" style="font-size:13px; line-height:1.6;"><b>${l.n}</b><br><span style="color:#555;">${dParts[2]}/${dParts[1]}/${dParts[0]} - H:${l.h}. T:${l.t}. Int:${l.i}. Warn: ${l.w}</span><br><small>Total Points: <b>${l.pts}</b></small></div>`;  
             });  
             document.getElementById('screen').innerHTML = h;  
         },  
@@ -510,9 +443,7 @@
         kick(i) {   
             const target = this.data.admins[i];  
             if((this.user.role === 'editor' || this.user.role === 'high_command') && target.name === this.user.name) return alert("You cannot kick yourself!");  
-            if(confirm(`Are you sure you want to kick ${target.name}?`)) {   
-                this.data.admins.splice(i,1); this.save(); this.nav('curr-admins');   
-            }  
+            if(confirm(`Are you sure you want to kick ${target.name}?`)) { this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); }  
         },  
         delF(i) { if(confirm("Delete?")) { this.data.history.splice(i,1); this.save(); this.nav('stored'); }},  
         approve(i) {  
@@ -526,17 +457,12 @@
         requestAccess() {  
             const n = document.getElementById('req-n').value;  
             const l = document.getElementById('req-lvl').value;  
-            if(n && l) {  
-                if(!this.data.requests) this.data.requests = [];  
-                this.data.requests.push({name: n, lvl: l});  
-                this.save(); alert("Application Sent!");  
-            }  
+            if(n && l) { if(!this.data.requests) this.data.requests = []; this.data.requests.push({name: n, lvl: l}); this.save(); alert("Application Sent!"); }  
         },  
         toggleMenu(s) { document.getElementById('menu-overlay').classList.toggle('active', s); },  
         logout() { location.reload(); }  
     };  
     app.init();  
-</script>
-
+</script>  
 </body>  
 </html>

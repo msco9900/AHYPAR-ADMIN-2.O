@@ -31,6 +31,17 @@
         .rule-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; white-space: pre-wrap; margin-top: 10px; }  
         .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }  
         .tag-span { color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}  
+        
+        /* Chat Feature Styles */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 150px); }
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 10px; background: #fff; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 85%; font-size: 13px; line-height: 1.4; position: relative; }
+        .msg-self { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        .msg-other { align-self: flex-start; background: #eaebed; color: var(--text); border-bottom-left-radius: 2px; }
+        .msg-meta { font-size: 10px; opacity: 0.8; display: block; margin-bottom: 3px; font-weight: bold; }
+        .chat-input-area { display: flex; gap: 8px; }
+        .chat-input-area input { flex-grow: 1; margin: 0; }
+        .chat-input-area button { width: auto; margin: 0; padding: 0 20px; }
     </style>
 </head>  
 <body>  
@@ -68,6 +79,7 @@
         <div class="menu-item" onclick="app.nav('promo')">🎖️ Leader Board </div>  
         <div class="menu-item section-view hidden" onclick="app.nav('stored')">📁 Store Files</div>  
         <div class="menu-item section-hr hidden" onclick="app.nav('access')">🔐 Manage Requests</div>  
+        <div class="menu-item" onclick="app.nav('chat')" style="color:var(--primary); border-top: 1px solid #eee;">💬 Chat</div>  
         <div class="menu-item" onclick="app.logout()" style="color:var(--danger)">Logout</div>  
     </div>  
     <div class="container" id="screen"></div>  
@@ -130,6 +142,9 @@
 
         nav(page) {  
             this.toggleMenu(false);  
+            // Stop listening to chat if we navigate away
+            db.ref('staff_chat').off();
+            
             const area = document.getElementById('screen');  
             const adminsList = this.data.admins || [];  
             let html = '';  
@@ -266,12 +281,75 @@
                             <button style="background:var(--success); width:48%" onclick="app.approve(${i})">✔</button>  
                             <button style="background:var(--danger); width:48%" onclick="app.reject(${i})">✖</button></div>`;  
                     });  
-                    break;  
+                    break;
+                
+                case 'chat':
+                    html = `<h3>Staff Chat</h3>
+                            <div class="chat-container">
+                                <div id="chat-box" class="chat-messages">Loading...</div>
+                                <div class="chat-input-area">
+                                    <input type="text" id="chat-input" placeholder="Type message..." onkeypress="if(event.key==='Enter') app.sendChat()">
+                                    <button onclick="app.sendChat()">Send</button>
+                                </div>
+                            </div>`;
+                    area.innerHTML = html;
+                    this.initChat();
+                    return; // Prevent final area.innerHTML overwrite
             }  
             area.innerHTML = html;  
             if(page === 'promo') this.renderLB();  
             if(page === 'weekly') this.renderLive();  
         },  
+
+        /* Real-time Chat Logic */
+        initChat() {
+            const now = new Date();
+            // Convert to Bangladesh Time (UTC+6)
+            const bdtOffset = 6 * 60 * 60 * 1000;
+            const bdtTime = new Date(now.getTime() + bdtOffset);
+            const dateStr = bdtTime.getUTCFullYear() + '-' + (bdtTime.getUTCMonth()+1) + '-' + bdtTime.getUTCDate();
+            
+            // 2 AM Cleanup Check
+            db.ref('chat_meta/last_clear').once('value', (snap) => {
+                const lastClear = snap.val();
+                if(lastClear !== dateStr && bdtTime.getUTCHours() >= 2) {
+                    db.ref('staff_chat').remove();
+                    db.ref('chat_meta/last_clear').set(dateStr);
+                }
+            });
+
+            // Listen for Messages
+            db.ref('staff_chat').limitToLast(40).on('value', (snap) => {
+                const box = document.getElementById('chat-box');
+                if(!box) return;
+                const msgs = snap.val();
+                if(!msgs) { box.innerHTML = "<p style='text-align:center; color:#888; margin-top:20px;'>No messages today.</p>"; return; }
+                
+                box.innerHTML = Object.values(msgs).map(m => {
+                    const isMe = m.user === this.user.name;
+                    return `<div class="msg ${isMe ? 'msg-self' : 'msg-other'}">
+                                <span class="msg-meta">${m.user} • ${m.time}</span>
+                                ${m.text}
+                            </div>`;
+                }).join('');
+                box.scrollTop = box.scrollHeight;
+            });
+        },
+
+        sendChat() {
+            const input = document.getElementById('chat-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            db.ref('staff_chat').push({
+                user: this.user.name,
+                text: txt,
+                time: time,
+                ts: firebase.database.ServerValue.TIMESTAMP
+            });
+            input.value = '';
+        },
 
         renderLive() {  
             const div = document.getElementById('live-view');  

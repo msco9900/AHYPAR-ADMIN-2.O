@@ -32,7 +32,6 @@
         .rule-meta { font-size: 11px; color: #777; margin-bottom: 8px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 5px; }  
         .tag-span { color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle;}  
         
-        /* Chat Feature Styles */
         .chat-container { display: flex; flex-direction: column; height: calc(100vh - 150px); }
         .chat-messages { flex-grow: 1; overflow-y: auto; padding: 10px; background: #fff; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; }
         .msg { margin-bottom: 10px; padding: 10px; border-radius: 12px; max-width: 85%; font-size: 13px; line-height: 1.4; position: relative; }
@@ -142,9 +141,7 @@
 
         nav(page) {  
             this.toggleMenu(false);  
-            // Stop listening to chat if we navigate away
             db.ref('staff_chat').off();
-            
             const area = document.getElementById('screen');  
             const adminsList = this.data.admins || [];  
             let html = '';  
@@ -203,25 +200,14 @@
                         }
 
                         html += `<div style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px">`;
-                        
-                        let isJunior = false;
-                        if (isEditor && ['admin', 'view', 'hr'].includes(a.role)) isJunior = true;
-                        if (isHC && ['admin', 'view', 'hr', 'editor'].includes(a.role)) isJunior = true;
-
-                        if(isOwner || isJunior) {
-                            if(isOwner) {
-                                html += `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>`;
-                            }
-                            
+                        if(isOwner || (isEditor && ['admin', 'view', 'hr'].includes(a.role)) || (isHC && ['admin', 'view', 'hr', 'editor'].includes(a.role))) {
+                            if(isOwner) html += `<input id="lvl-up-${i}" placeholder="New Level" style="width:60%; display:inline; padding:5px"> <button class="role-btn" onclick="app.changeLvl(${i})">Set</button><br>`;
                             html += `<button class="role-btn ${a.role==='admin'?'active-role':''}" onclick="app.setRole(${i},'admin')">Admin</button>
                                      <button class="role-btn ${a.role==='view'?'active-role':''}" onclick="app.setRole(${i},'view')">View</button>
                                      <button class="role-btn ${a.role==='hr'?'active-role':''}" onclick="app.setRole(${i},'hr')">HR</button>
                                      <button class="role-btn" style="background:var(--danger); color:white" onclick="app.kick(${i})">Kick</button>`;
-                            
-                            if(isOwner) {
-                                html += `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>
+                            if(isOwner) html += `<button class="role-btn ${a.role==='editor'?'active-role':''}" onclick="app.setRole(${i},'editor')">Editor</button>
                                          <button class="role-btn ${a.role==='high_command'?'active-role':''}" style="background:var(--gold); color:black" onclick="app.setRole(${i},'high_command')">High Command</button>`;
-                            }
                         }
                         html += `</div></div>`;
                     });
@@ -230,21 +216,8 @@
                 case 'weekly':  
                     html = `<h3>Weekly Reports</h3>`;  
                     if(['owner', 'editor', 'high_command'].includes(this.user.role)) {  
-                        if(!this.data.activeWeek) {  
-                            html += `<div class="card"><input id="wt" placeholder="Week Title"><button onclick="app.startW()">Start New Week</button></div>`;  
-                        } else {  
-                            html += `<div class="card">  
-                                <p>Working on: <b>${this.data.activeWeek.title}</b></p>  
-                                <select id="sel-n">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select>  
-                                <input type="date" id="fd">                    
-                                <input type="number" step="0.1" id="fh" placeholder="Hours">  
-                                <input type="number" id="ft" placeholder="Tours">  
-                                <input type="number" id="fi" placeholder="Interviews">  
-                                <input type="text" id="fw" placeholder="Warning">  
-                                <button style="background:var(--success)" onclick="app.addLog()">Save Entry</button>  
-                                <button style="background:var(--danger)" onclick="app.finishW()">Finish & Store</button>  
-                            </div><div id="live-view"></div>`;  
-                        }  
+                        if(!this.data.activeWeek) { html += `<div class="card"><input id="wt" placeholder="Week Title"><button onclick="app.startW()">Start New Week</button></div>`; } 
+                        else { html += `<div class="card"><p>Working on: <b>${this.data.activeWeek.title}</b></p><select id="sel-n">${adminsList.map(a=>`<option>${a.name}</option>`).join('')}</select><input type="date" id="fd"><input type="number" step="0.1" id="fh" placeholder="Hours"><input type="number" id="ft" placeholder="Tours"><input type="number" id="fi" placeholder="Interviews"><input type="text" id="fw" placeholder="Warning"><button style="background:var(--success)" onclick="app.addLog()">Save Entry</button><button style="background:var(--danger)" onclick="app.finishW()">Finish & Store</button></div><div id="live-view"></div>`; }  
                     } else { html += `<div id="live-view"></div>`; }  
                     break;  
 
@@ -252,291 +225,132 @@
                     html = `<h3>Leader Board</h3>`;  
                     if(['owner', 'high_command'].includes(this.user.role)) {  
                         const history = this.data.history || [];  
-                        html += `<div class="card">  
-                            <label>Select File:</label>  
-                            <select id="lb-file-select" style="margin-bottom:10px;">  
-                                ${history.map((h, idx) => `<option value="${idx}">${h.title}</option>`).join('')}  
-                            </select>  
-                            <button style="background:var(--primary); margin-bottom:5px;" onclick="app.setLBStatus('published_hc')">👁️ Result for High Command</button>  
-                            <button style="background:var(--success); margin-bottom:5px;" onclick="app.setLBStatus('published_public')">🌍 Result Public</button>  
-                            <button style="background:var(--danger)" onclick="app.setLBStatus('closed')">🔒 Close the Leader Board</button>  
-                        </div>`;  
+                        html += `<div class="card"><label>Select File:</label><select id="lb-file-select" style="margin-bottom:10px;">${history.map((h, idx) => `<option value="${idx}">${h.title}</option>`).join('')}</select><button style="background:var(--primary); margin-bottom:5px;" onclick="app.setLBStatus('published_hc')">👁️ Result HC</button><button style="background:var(--success); margin-bottom:5px;" onclick="app.setLBStatus('published_public')">🌍 Result Public</button><button style="background:var(--danger)" onclick="app.setLBStatus('closed')">🔒 Close</button></div>`;  
                     }  
                     html += `<div id="promo-res"></div>`;  
                     break;  
 
                 case 'stored':  
                     html = `<h3>Stored Files</h3>`;  
-                    (this.data.history || []).forEach((h, i) => {  
-                        html += `<div class="card" onclick="app.viewF(${i})">📂 ${h.title}</div>  
-                            ${this.user.role === 'owner' ? `<button class="btn-del" onclick="app.delF(${i})">Del</button>` : ''}`;  
-                    });  
+                    (this.data.history || []).forEach((h, i) => { html += `<div class="card" onclick="app.viewF(${i})">📂 ${h.title}</div>${this.user.role === 'owner' ? `<button class="btn-del" onclick="app.delF(${i})">Del</button>` : ''}`; });  
                     break;  
 
                 case 'access':  
                     html = `<h3>Applications</h3>`;  
-                    const reqs = this.data.requests || [];  
-                    reqs.forEach((r, i) => {  
-                        html += `<div class="card"><b>${r.name}</b> (${r.lvl})<br>  
-                            <button style="background:var(--success); width:48%" onclick="app.approve(${i})">✔</button>  
-                            <button style="background:var(--danger); width:48%" onclick="app.reject(${i})">✖</button></div>`;  
-                    });  
+                    (this.data.requests || []).forEach((r, i) => { html += `<div class="card"><b>${r.name}</b> (${r.lvl})<br><button style="background:var(--success); width:48%" onclick="app.approve(${i})">✔</button><button style="background:var(--danger); width:48%" onclick="app.reject(${i})">✖</button></div>`; });  
                     break;
                 
                 case 'chat':
-                    html = `<h3>Staff Chat</h3>
-                            <div class="chat-container">
-                                <div id="chat-box" class="chat-messages">Loading...</div>
-                                <div class="chat-input-area">
-                                    <input type="text" id="chat-input" placeholder="Type message..." onkeypress="if(event.key==='Enter') app.sendChat()">
-                                    <button onclick="app.sendChat()">Send</button>
-                                </div>
-                            </div>`;
+                    html = `<h3>Staff Chat</h3><div class="chat-container"><div id="chat-box" class="chat-messages">Loading...</div><div class="chat-input-area"><input type="text" id="chat-input" placeholder="Type message..." onkeypress="if(event.key==='Enter') app.sendChat()"><button onclick="app.sendChat()">Send</button></div></div>`;
                     area.innerHTML = html;
                     this.initChat();
-                    return; // Prevent final area.innerHTML overwrite
+                    return;
             }  
             area.innerHTML = html;  
             if(page === 'promo') this.renderLB();  
             if(page === 'weekly') this.renderLive();  
-        },  
-
-        /* Real-time Chat Logic */
-        initChat() {
-            const now = new Date();
-            // Convert to Bangladesh Time (UTC+6)
-            const bdtOffset = 6 * 60 * 60 * 1000;
-            const bdtTime = new Date(now.getTime() + bdtOffset);
-            const dateStr = bdtTime.getUTCFullYear() + '-' + (bdtTime.getUTCMonth()+1) + '-' + bdtTime.getUTCDate();
-            
-            // 2 AM Cleanup Check
-            db.ref('chat_meta/last_clear').once('value', (snap) => {
-                const lastClear = snap.val();
-                if(lastClear !== dateStr && bdtTime.getUTCHours() >= 2) {
-                    db.ref('staff_chat').remove();
-                    db.ref('chat_meta/last_clear').set(dateStr);
-                }
-            });
-
-            // Listen for Messages
-            db.ref('staff_chat').limitToLast(40).on('value', (snap) => {
-                const box = document.getElementById('chat-box');
-                if(!box) return;
-                const msgs = snap.val();
-                if(!msgs) { box.innerHTML = "<p style='text-align:center; color:#888; margin-top:20px;'>No messages today.</p>"; return; }
-                
-                box.innerHTML = Object.values(msgs).map(m => {
-                    const isMe = m.user === this.user.name;
-                    return `<div class="msg ${isMe ? 'msg-self' : 'msg-other'}">
-                                <span class="msg-meta">${m.user} • ${m.time}</span>
-                                ${m.text}
-                            </div>`;
-                }).join('');
-                box.scrollTop = box.scrollHeight;
-            });
-        },
-
-        sendChat() {
-            const input = document.getElementById('chat-input');
-            const txt = input.value.trim();
-            if(!txt) return;
-            
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            db.ref('staff_chat').push({
-                user: this.user.name,
-                text: txt,
-                time: time,
-                ts: firebase.database.ServerValue.TIMESTAMP
-            });
-            input.value = '';
-        },
-
-        renderLive() {  
-            const div = document.getElementById('live-view');  
-            if(!div || !this.data.activeWeek || !this.data.activeWeek.logs) return;  
-            const isOwner = this.user.role === 'owner'; 
-            div.innerHTML = "<h4>Live Stats (Recent First):</h4>" + 
-                this.data.activeWeek.logs.slice().reverse().map((l, index) => {
-                    const realIndex = this.data.activeWeek.logs.length - 1 - index;
-                    return `<div class="card" style="font-size:11px; border-left:3px solid var(--primary)">  
-                        ${isOwner ? `<button class="btn-del" onclick="app.deleteLog(${realIndex})" style="margin-top:0px;">Del</button>` : ''}
-                        <b>${l.n}</b> | ${l.d} | ${l.pts} Pts<br>  
-                        <small>H:${l.h}, T:${l.t}, Int:${l.i}, Warn:${l.w}</small>  
-                    </div>`;
-                }).join('');  
-        },
-
-        deleteLog(index) { 
-            if(confirm("Are you sure?")) {
-                this.data.activeWeek.logs.splice(index, 1);
-                this.save();
-                this.renderLive();
-            }
-        },
-
-        updateMasterKey() {  
-            const nk = document.getElementById('new-master').value;  
-            if(nk.trim() === '') return alert("Key cannot be empty!");  
-            if(confirm("Are you sure you want to change the Master Key?")) {  
-                this.data.ownerKey = nk;  
-                this.save();  
-                alert("Master Key Updated Successfully!");  
-            }  
-        },  
-
-        setOwnerStyle() {  
-            if(!this.data.ownerInfo) this.data.ownerInfo = {};  
-            this.data.ownerInfo.tag = document.getElementById('ow-t').value;  
-            this.data.ownerInfo.tagColor = document.getElementById('ow-tc').value;  
-            this.data.ownerInfo.boxColor = document.getElementById('ow-bc').value;  
-            this.save(); this.nav('curr-admins');  
-        },  
-
-        setAdminStyle(i) {  
-            this.data.admins[i].tag = document.getElementById(`tg-${i}`).value;  
-            this.data.admins[i].tagColor = document.getElementById(`tc-${i}`).value;  
-            this.data.admins[i].boxColor = document.getElementById(`bc-${i}`).value;  
-            this.save(); this.nav('curr-admins');  
-        },  
-
-        updateRules() {  
-            const text = document.getElementById('rule-input').value;  
-            const now = new Date();  
-            this.data.appRules = text;  
-            this.data.ruleAuthor = this.user.name;  
-            this.data.ruleDate = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();  
-            this.save();  
-            alert("Rules Posted!");  
-            this.nav('rules');  
-        },  
-
-        startW() { const t = document.getElementById('wt').value; if(t) { this.data.activeWeek = {title:t, logs:[]}; this.save(); this.nav('weekly'); }},  
-        addLog() {  
-            const n = document.getElementById('sel-n').value;  
-            const d = document.getElementById('fd').value;  
-            if(!d) return alert("Please select a date!");  
-            if((this.user.role === 'editor' || this.user.role === 'high_command') && n === this.user.name) { return alert("Restriction: You cannot add points to your own account via Weekly Reports!"); }  
-            const h = parseFloat(document.getElementById('fh').value)||0;  
-            const t = parseInt(document.getElementById('ft').value)||0;  
-            const i = parseInt(document.getElementById('fi').value)||0;  
-            const w = document.getElementById('fw').value || 'None';  
-            if(!this.data.activeWeek.logs) this.data.activeWeek.logs = [];  
-            this.data.activeWeek.logs.push({ n, d, h, t, i, w, pts: h + (t*10) + (i*2) });  
-            this.save();   
-            document.getElementById('fh').value = ""; document.getElementById('ft').value = "";  
-            document.getElementById('fi').value = ""; document.getElementById('fw').value = "";  
-            this.renderLive();  
-        },  
-
-        finishW() {  
-            if(!confirm("Store this file and update admin banks?")) return;  
-            this.data.activeWeek.logs.forEach(l => {  
-                const a = this.data.admins.find(x => x.name === l.n);  
-                if(a) { a.bank = (a.bank || 0) + l.pts; a.warnings = l.w; }  
-            });  
-            if(!this.data.history) this.data.history = [];  
-            this.data.history.push(this.data.activeWeek);  
-            this.data.activeWeek = null; this.save(); this.nav('stored');  
-        },  
-
-        viewAdminProfile(i) {
-            const a = this.data.admins[i];
-            const isOwner = this.user.role === 'owner';
-            const isHC = this.user.role === 'high_command';
-            const isEditor = this.user.role === 'editor';
-
-            if (isEditor) return alert("Access Denied: Editors are not allowed to view profiles.");
-            
-            const canAccess = isOwner || (isHC && !['owner', 'high_command'].includes(a.role));
-            if (!canAccess) return alert("Restriction: You cannot view this profile.");
-
-            document.getElementById('screen').innerHTML = `
-                <h3>Admin Profile</h3>
-                <div class="card">
-                    <label>Name</label><input id="ed-n" value="${a.name}" ${!isOwner ? 'disabled' : ''}>
-                    <label>Level</label><input id="ed-l" value="${a.lvl}">
-                    <label>Points</label><input type="number" id="ed-b" value="${a.bank || 0}">
-                    <label>Warnings</label><input id="ed-w" value="${a.warnings || 'None'}">
-                    <label>Passcode</label><input type="text" id="ed-p" value="${a.passcode}">
-                    <div style="margin-top:15px;">
-                        <button style="background:var(--success); margin-bottom:10px;" onclick="app.updateAdmin(${i})">Save Changes</button>
-                        <button style="background:var(--black);" onclick="app.nav('curr-admins')">Back</button>
-                    </div>
-                </div>`;
-        },
-
-        updateAdmin(i) {
-            const a = this.data.admins[i];
-            const isOwner = this.user.role === 'owner';
-            const isHC = this.user.role === 'high_command';
-            if (!isOwner && !(isHC && !['owner', 'high_command'].includes(a.role))) return alert("Unauthorized");
-
-            if (isOwner) a.name = document.getElementById('ed-n').value;
-            a.lvl = document.getElementById('ed-l').value;
-            a.bank = parseInt(document.getElementById('ed-b').value) || 0;
-            a.warnings = document.getElementById('ed-w').value;
-            a.passcode = document.getElementById('ed-p').value;
-            this.save(); alert("Updated Successfully!"); this.nav('curr-admins');
-        },
-
-        setLBStatus(status) {  
-            if(status === 'closed') { this.data.lbStatus = 'closed'; } else {  
-                const idx = document.getElementById('lb-file-select').value;  
-                if(idx === "") return;  
-                this.data.lbStatus = status;  
-                this.data.lbFileIndex = parseInt(idx);  
-            }  
-            this.save(); this.renderLB();  
-        },  
+        }, 
 
         renderLB() {  
             const div = document.getElementById('promo-res');  
             if(!div) return;  
-            if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) { div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is currently closed.</p>"; return; }  
-            if(this.data.lbStatus === 'published_hc' && !['owner', 'high_command'].includes(this.user.role)) { div.innerHTML = "<p style='text-align:center; color:grey; font-weight:bold;'>Leader Board results are currently visible to High Command only.</p>"; return; }  
+            if(this.data.lbStatus === 'closed' || this.data.lbFileIndex === -1) { div.innerHTML = "<p style='text-align:center; color:grey;'>Leader Board is closed.</p>"; return; }  
+            if(this.data.lbStatus === 'published_hc' && !['owner', 'high_command'].includes(this.user.role)) { div.innerHTML = "<p style='text-align:center; color:grey; font-weight:bold;'>Visible to High Command only.</p>"; return; }  
+            
             const file = this.data.history[this.data.lbFileIndex];  
             if(!file) return;  
+            
             const stats = {};  
             file.logs.forEach(l => {  
                 if(!stats[l.n]) stats[l.n] = { n: l.n, pts: 0, w: "" };  
                 stats[l.n].pts += l.pts;  
                 if(l.w && ["V1","V2","W1","W2","W3"].includes(l.w.toUpperCase())) stats[l.n].w = l.w.toUpperCase();  
             });  
+            
             const sorted = Object.values(stats).sort((a,b)=>b.pts - a.pts);  
             let boardType = this.data.lbStatus === 'published_hc' ? ' (HC Only)' : ' (Public)';  
-            div.innerHTML = `<h4>Ranking: ${file.title}${boardType}</h4>` + sorted.map((s,i)=>`<div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}"><b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w?`<br><small>Cancelled: ${s.w}</small>`:''}</div>`).join('');  
-        },  
+            
+            div.innerHTML = `<h4>Ranking: ${file.title}${boardType}</h4>` + sorted.map((s,i) => `
+                <div class="card" style="border-left:5px solid ${s.w?'red':(i===0?'gold':'green')}; display: flex; justify-content: space-between; align-items: center;">
+                    <div><b>#${i+1} ${s.n}</b> - ${s.pts} Pts ${s.w ? `<br><small style="color:red">Cancelled: ${s.w}</small>` : ''}</div>
+                    ${this.user.role === 'owner' ? `<button class="role-btn" style="background: var(--gold); color: black; margin: 0; padding: 5px 10px;" onclick="app.editLBPoints('${s.n}')">Edit</button>` : ''}
+                </div>`).join('');  
+        },
 
-        viewF(i) {  
-            const f = this.data.history[i];  
-            let h = `<h3>${f.title}</h3><button onclick="app.nav('stored')">Back</button><br><br>`;  
-            f.logs.forEach(l => {  
-                let dParts = l.d ? l.d.split('-') : ["??","??","??"];  
-                h += `<div class="card" style="font-size:13px; line-height:1.6;"><b>${l.n}</b><br><span style="color:#555;">${dParts[2]}/${dParts[1]}/${dParts[0]} - H:${l.h}. T:${l.t}. Int:${l.i}. Warn: ${l.w}</span><br><small>Total Points: <b>${l.pts}</b></small></div>`;  
-            });  
-            document.getElementById('screen').innerHTML = h;  
+        editLBPoints(adminName) {
+            const file = this.data.history[this.data.lbFileIndex];
+            const logs = file.logs.filter(l => l.n === adminName);
+            const currentTotal = logs.reduce((sum, l) => sum + l.pts, 0);
+            const newPointsInput = prompt(`Current total for ${adminName}: ${currentTotal}\nEnter new total points:`, currentTotal);
+            
+            if (newPointsInput !== null && !isNaN(newPointsInput)) {
+                const newPoints = parseFloat(newPointsInput);
+                const diff = newPoints - currentTotal;
+                file.logs.push({ n: adminName, d: new Date().toISOString().split('T')[0], h: 0, t: 0, i: 0, w: "Correction", pts: diff });
+                this.save(); alert("Points Updated!"); this.renderLB();
+            }
+        },
+
+        initChat() {
+            const now = new Date();
+            const bdtTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+            const dateStr = bdtTime.getUTCFullYear() + '-' + (bdtTime.getUTCMonth()+1) + '-' + bdtTime.getUTCDate();
+            
+            db.ref('chat_meta/last_clear').once('value', (snap) => {
+                if(snap.val() !== dateStr && bdtTime.getUTCHours() >= 2) {
+                    db.ref('staff_chat').remove(); db.ref('chat_meta/last_clear').set(dateStr);
+                }
+            });
+
+            db.ref('staff_chat').limitToLast(40).on('value', (snap) => {
+                const box = document.getElementById('chat-box'); if(!box) return;
+                const msgs = snap.val(); if(!msgs) { box.innerHTML = "<p style='text-align:center; color:#888;'>No messages.</p>"; return; }
+                box.innerHTML = Object.values(msgs).map(m => `<div class="msg ${m.user === this.user.name ? 'msg-self' : 'msg-other'}"><span class="msg-meta">${m.user} • ${m.time}</span>${m.text}</div>`).join('');
+                box.scrollTop = box.scrollHeight;
+            });
+        },
+
+        sendChat() {
+            const input = document.getElementById('chat-input');
+            const txt = input.value.trim(); if(!txt) return;
+            db.ref('staff_chat').push({ user: this.user.name, text: txt, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), ts: firebase.database.ServerValue.TIMESTAMP });
+            input.value = '';
+        },
+
+        renderLive() {  
+            const div = document.getElementById('live-view'); if(!div || !this.data.activeWeek || !this.data.activeWeek.logs) return;  
+            div.innerHTML = "<h4>Live Stats:</h4>" + this.data.activeWeek.logs.slice().reverse().map((l, index) => `<div class="card" style="font-size:11px; border-left:3px solid var(--primary)">${this.user.role === 'owner' ? `<button class="btn-del" onclick="app.deleteLog(${this.data.activeWeek.logs.length - 1 - index})">Del</button>` : ''}<b>${l.n}</b> | ${l.d} | ${l.pts} Pts<br><small>H:${l.h}, T:${l.t}, Int:${l.i}, W:${l.w}</small></div>`).join('');  
+        },
+
+        deleteLog(index) { if(confirm("Are you sure?")) { this.data.activeWeek.logs.splice(index, 1); this.save(); this.renderLive(); } },
+        updateMasterKey() { const nk = document.getElementById('new-master').value; if(nk.trim() && confirm("Change Master Key?")) { this.data.ownerKey = nk; this.save(); alert("Updated!"); } },  
+        setOwnerStyle() { this.data.ownerInfo.tag = document.getElementById('ow-t').value; this.data.ownerInfo.tagColor = document.getElementById('ow-tc').value; this.data.ownerInfo.boxColor = document.getElementById('ow-bc').value; this.save(); this.nav('curr-admins'); },  
+        updateRules() { const text = document.getElementById('rule-input').value; this.data.appRules = text; this.data.ruleAuthor = this.user.name; this.data.ruleDate = new Date().toLocaleString(); this.save(); alert("Posted!"); this.nav('rules'); },  
+        startW() { const t = document.getElementById('wt').value; if(t) { this.data.activeWeek = {title:t, logs:[]}; this.save(); this.nav('weekly'); }},  
+        addLog() {  
+            const n = document.getElementById('sel-n').value; const d = document.getElementById('fd').value;
+            if(!d) return alert("Select date!");
+            if((this.user.role === 'editor' || this.user.role === 'high_command') && n === this.user.name) return alert("Cannot add points to yourself!");
+            const h = parseFloat(document.getElementById('fh').value)||0, t = parseInt(document.getElementById('ft').value)||0, i = parseInt(document.getElementById('fi').value)||0, w = document.getElementById('fw').value || 'None';
+            this.data.activeWeek.logs.push({ n, d, h, t, i, w, pts: h + (t*10) + (i*2) });
+            this.save(); this.renderLive();
         },  
+        finishW() { if(confirm("Store and update banks?")) { this.data.activeWeek.logs.forEach(l => { const a = this.data.admins.find(x => x.name === l.n); if(a) { a.bank = (a.bank || 0) + l.pts; a.warnings = l.w; } }); if(!this.data.history) this.data.history = []; this.data.history.push(this.data.activeWeek); this.data.activeWeek = null; this.save(); this.nav('stored'); } },  
+        viewAdminProfile(i) {
+            const a = this.data.admins[i];
+            if (this.user.role === 'editor') return alert("Access Denied.");
+            document.getElementById('screen').innerHTML = `<h3>Profile</h3><div class="card"><label>Name</label><input id="ed-n" value="${a.name}" ${this.user.role !== 'owner' ? 'disabled' : ''}><label>Level</label><input id="ed-l" value="${a.lvl}"><label>Points</label><input type="number" id="ed-b" value="${a.bank || 0}"><label>Warnings</label><input id="ed-w" value="${a.warnings || 'None'}"><label>Passcode</label><input type="text" id="ed-p" value="${a.passcode}"><button onclick="app.updateAdmin(${i})">Save</button><button onclick="app.nav('curr-admins')">Back</button></div>`;
+        },
+        updateAdmin(i) { const a = this.data.admins[i]; if(this.user.role === 'owner') a.name = document.getElementById('ed-n').value; a.lvl = document.getElementById('ed-l').value; a.bank = parseInt(document.getElementById('ed-b').value); a.warnings = document.getElementById('ed-w').value; a.passcode = document.getElementById('ed-p').value; this.save(); alert("Updated!"); this.nav('curr-admins'); },
+        setLBStatus(status) { if(status === 'closed') { this.data.lbStatus = 'closed'; } else { const idx = document.getElementById('lb-file-select').value; if(idx === "") return; this.data.lbStatus = status; this.data.lbFileIndex = parseInt(idx); } this.save(); this.renderLB(); },  
+        viewF(i) { const f = this.data.history[i]; let h = `<h3>${f.title}</h3><button onclick="app.nav('stored')">Back</button><br><br>`; f.logs.forEach(l => { h += `<div class="card"><b>${l.n}</b><br><small>${l.d} - Pts: ${l.pts}</small></div>`; }); document.getElementById('screen').innerHTML = h; },  
         changeLvl(i) { this.data.admins[i].lvl = document.getElementById(`lvl-up-${i}`).value; this.save(); this.nav('curr-admins'); },  
         setRole(i, r) { this.data.admins[i].role = r; this.save(); this.nav('curr-admins'); },  
-        kick(i) {   
-            const target = this.data.admins[i];  
-            if((this.user.role === 'editor' || this.user.role === 'high_command') && target.name === this.user.name) return alert("You cannot kick yourself!");  
-            if(confirm(`Are you sure you want to kick ${target.name}?`)) { this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); }  
-        },  
+        kick(i) { if(confirm("Kick?")) { this.data.admins.splice(i,1); this.save(); this.nav('curr-admins'); } },  
         delF(i) { if(confirm("Delete?")) { this.data.history.splice(i,1); this.save(); this.nav('stored'); }},  
-        approve(i) {  
-            const r = this.data.requests[i];  
-            const code = Math.floor(1000 + Math.random()*8999).toString();  
-            if(!this.data.admins) this.data.admins = [];  
-            this.data.admins.push({ name: r.name, lvl: r.lvl, bank: 0, warnings: 'None', passcode: code, role: 'admin' });  
-            this.data.requests.splice(i, 1); this.save(); alert("Approved! Code: " + code); this.nav('access');  
-        },  
+        approve(i) { const r = this.data.requests[i]; const code = Math.floor(1000 + Math.random()*8999).toString(); this.data.admins.push({ name: r.name, lvl: r.lvl, bank: 0, warnings: 'None', passcode: code, role: 'admin' }); this.data.requests.splice(i, 1); this.save(); alert("Code: " + code); this.nav('access'); },  
         reject(i) { this.data.requests.splice(i,1); this.save(); this.nav('access'); },  
-        requestAccess() {  
-            const n = document.getElementById('req-n').value;  
-            const l = document.getElementById('req-lvl').value;  
-            if(n && l) { if(!this.data.requests) this.data.requests = []; this.data.requests.push({name: n, lvl: l}); this.save(); alert("Application Sent!"); }  
-        },  
+        requestAccess() { const n = document.getElementById('req-n').value, l = document.getElementById('req-lvl').value; if(n && l) { if(!this.data.requests) this.data.requests = []; this.data.requests.push({name: n, lvl: l}); this.save(); alert("Sent!"); } },  
         toggleMenu(s) { document.getElementById('menu-overlay').classList.toggle('active', s); },  
         logout() { location.reload(); }  
     };  

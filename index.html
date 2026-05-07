@@ -1122,8 +1122,7 @@ const app = {
         const t = document.getElementById('wt').value.trim();
         if (t) { this.data.activeWeek = {title:t, logs:[]}; this.save(); this.nav('weekly'); }
     },
-
-    finishW() {
+   finishW() {
         if (!confirm("Finalize week and update staff banks?")) return;
         if (!this.data.activeWeek) return;
         this.data.activeWeek.logs.forEach(l => {
@@ -1145,8 +1144,8 @@ const app = {
             <div class="card-title">Edit Information</div>
             <label>Name</label><input id="ed-n" value="${a.name}" ${!isOwner?'disabled':''}>
             <label>Level / Position</label><input id="ed-l" value="${a.lvl}">
-            <label>Bank Points</label><input type="number" id="ed-b" value="${a.bank||0}">
-            <label>Warnings</label><input id="ed-w" value="${a.warnings||'None'}">
+            <label>Bank Points</label><input type="text" id="ed-b" value="${a.bank||0}">
+            <label>Warnings</label><input teyp="text"id="ed-w" value="${a.warnings||'None'}">
             <label>Passcode</label><input type="text" id="ed-p" value="${a.passcode}">
             <div style="display:flex;gap:8px;margin-top:8px">
                 <button onclick="app.updateAdmin(${i})" style="flex:1">Save Changes</button>
